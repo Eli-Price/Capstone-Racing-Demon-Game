@@ -84,23 +84,32 @@ export class Deck {
 
             // Draw a border on the dynamic texture
             const graphics = this.scene.add.graphics();
-            graphics.lineStyle(1, 0x000000); // Set the line style to a 1px black line 
-            graphics.strokeRoundedRect(    // Draw the border
+            graphics.lineStyle(1, 0x000000); // Set the line style to a 1px black line
+            graphics.strokeRoundedRect(
+               // Draw the border
                0,
                0,
                CardConfig.Size.WIDTH,
                CardConfig.Size.HEIGHT,
                CardConfig.Size.CORNER
             );
-            dynTex?.draw(graphics.generateTexture('border', CardConfig.Size.WIDTH, CardConfig.Size.HEIGHT), 0, 0); // Draw the border onto the dynamic texture
+            dynTex?.draw(
+               graphics.generateTexture(
+                  'border',
+                  CardConfig.Size.WIDTH,
+                  CardConfig.Size.HEIGHT
+               ),
+               0,
+               0
+            ); // Draw the border onto the dynamic texture
             graphics.destroy(); // Destroys the graphics object as it's no longer needed
-
 
             // Create a new card object with the suit, value, and game object
             // The game object is an image created from the dynamic texture
             this.cards.push({
                suit: s,
                value: v,
+               faceUp: false,
                gameObject: this.scene.make.image({ key: texID }),
             });
          }
@@ -114,7 +123,7 @@ export class Deck {
          [this.cards[i], this.cards[j]] = [this.cards[j], this.cards[i]];
       }
    }
-   
+
    // Deals cards in a setup for racing demon
    public Deal = () => {
       this.Shuffle(); // Shuffle the cards
@@ -126,15 +135,18 @@ export class Deck {
       const middleStack3 = [];
       const middleStack4 = [];
       const drawPile = [];
-  
+
       // Deal four cards at the top-middle of the screen
       for (let i = 0; i < 4; ++i) {
-         
          this.cards[i].gameObject.scale = 0.5; // Scale down the card image
-  
+
          // Position the card horizontally in the middle of the screen, offset by the card width + 25% of the card width
-         this.cards[i].gameObject.x = this.scene.game.scale.width / 2 + (i - 2) * (this.cards[i].gameObject.displayWidth + this.cards[i].gameObject.displayWidth * 0.25);
-  
+         this.cards[i].gameObject.x =
+            this.scene.game.scale.width / 2 +
+            (i - 2) *
+               (this.cards[i].gameObject.displayWidth +
+                  this.cards[i].gameObject.displayWidth * 0.25);
+
          // Position the card vertically at the top of the screen, offset by 2/3 of the card height
          this.cards[i].gameObject.y = this.cards[i].gameObject.displayHeight;
 
@@ -144,11 +156,13 @@ export class Deck {
          // Add an input event listener to the card
          this.cards[i].gameObject.on('pointerdown', () => {
             // When the card is clicked, log its suit and value to the console
-            console.log(CardConfig.Values[this.cards[i].value]  + " of " +
-               CardConfig.Suits[this.cards[i].suit]);
+            console.log(
+               CardConfig.Values[this.cards[i].value] +
+                  ' of ' +
+                  CardConfig.Suits[this.cards[i].suit]
+            );
          });
       }
-      
 
       // Deal a stack of 13 cards
       for (let i = 4; i < 17; ++i) {
@@ -156,10 +170,10 @@ export class Deck {
          demonPile.push(card); // Add the card to the demon pile
 
          this.cards[i].gameObject.scale = 0.5; // Scale down the card image
-  
+
          // Position the card horizontally on the left side of the screen
          this.cards[i].gameObject.x = this.cards[i].gameObject.displayWidth * 2;
-  
+
          // Position the card vertically, offset by the card index times 1/13 of the card height
          this.cards[i].gameObject.y = this.cards[i].gameObject.displayHeight;
 
@@ -172,44 +186,53 @@ export class Deck {
          /*this.scene.input.setDraggable(this.cards[i].gameObject);*/
 
          //Store the original position of the card
-         this.cards[i].gameObject.data.set('originalPosition', { x: this.cards[i].gameObject.x, y: this.cards[i].gameObject.y });
-
-         this.cards[i].gameObject.on('drag', (_pointer: any, dragX: number, dragY: number) => {
-            this.cards[i].gameObject.x = dragX;
-            this.cards[i].gameObject.y = dragY;
+         this.cards[i].gameObject.data.set('originalPosition', {
+            x: this.cards[i].gameObject.x,
+            y: this.cards[i].gameObject.y,
          });
+
+         this.cards[i].gameObject.on(
+            'drag',
+            (_pointer: any, dragX: number, dragY: number) => {
+               this.cards[i].gameObject.x = dragX;
+               this.cards[i].gameObject.y = dragY;
+            }
+         );
 
          this.cards[i].gameObject.on('pointerdown', () => {
             this.cards[i].gameObject.setTint(0x44ff44);
          });
-         
+
          this.cards[i].gameObject.on('pointerup', () => {
             this.cards[i].gameObject.clearTint();
             console.log(this.cards[i].gameObject.data.get('originalPosition'));
 
             // If the condition is not met, move the card back to its original position
             if (true) {
-               const originalPosition = this.cards[i].gameObject.data.get('originalPosition');
+               const originalPosition =
+                  this.cards[i].gameObject.data.get('originalPosition');
                this.cards[i].gameObject.x = originalPosition.x;
                this.cards[i].gameObject.y = originalPosition.y;
             }
          });
 
-         
          // Add an input event listener to the card
          this.cards[i].gameObject.on('pointerdown', () => {
             // When the card is clicked, log its suit and value to the console
-            console.log(CardConfig.Values[this.cards[i].value]  + " of " +
-               CardConfig.Suits[this.cards[i].suit]);
+            console.log(
+               CardConfig.Values[this.cards[i].value] +
+                  ' of ' +
+                  CardConfig.Suits[this.cards[i].suit]
+            );
          });
       }
-      
+
       // The remaining cards go to the draw pile
       drawPile.push(...this.cards);
       /* this.cards = []; */ // Clear the deck
 
       // Deal the draw pile
-  }
+   };
 
    /*
    // Deals a full deck of cards in a grid
