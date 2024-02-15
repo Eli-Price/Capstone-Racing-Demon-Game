@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import * as CardConfig from './card_config';
 import { Deck } from './deck';
 
+let card;
+
 class PlaygroundScene extends Phaser.Scene {
    constructor() {
       super('playground');
@@ -13,13 +15,19 @@ class PlaygroundScene extends Phaser.Scene {
          CardConfig.Font.IMAGE,
          CardConfig.Font.CONFIG
       );
+
+      this.load.spritesheet(
+         'cards',
+         './assets/Top-Down/Cards/Spades-88x124.png',
+         { frameWidth: 88, frameHeight: 124 }
+      );
    }
 
    create() {
       const deck = new Deck(this);
       deck.Deal();
 
-      
+      card = this.add.sprite(88, 124, 'cards', 0);
    }
 
    update() {
@@ -30,7 +38,10 @@ class PlaygroundScene extends Phaser.Scene {
       var positionText = `Mouse Position: (${mouseX}, ${mouseY})`;
 
       this.children.each((child) => {
-         if (child instanceof Phaser.GameObjects.Text && child.text.startsWith('Mouse Position')) {
+         if (
+            child instanceof Phaser.GameObjects.Text &&
+            child.text.startsWith('Mouse Position')
+         ) {
             child.destroy();
          }
       });
