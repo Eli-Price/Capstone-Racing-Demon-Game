@@ -9,6 +9,7 @@ export class Deck {
       for (let suit = 0; suit < suits.length; suit++) {
          for (let value = 0; value < 13; value++) {
             let card: Card = new Card(
+               scene,
                suits[suit] + value,
                suit,
                value,
@@ -22,7 +23,8 @@ export class Deck {
             //card.faceDownObject.setInteractive({ draggable: true });
             card.faceUpObject.setVisible(false);
             card.faceDownObject.setVisible(true);
-            card.container.add([card.faceUpObject, card.faceDownObject])
+            card.container.add([card.faceUpObject, card.faceDownObject, card]);
+            card.container.getAt(2).setVisible(false); // It works, TypeScript is just being a pain
          }
       }
    }

@@ -1,4 +1,4 @@
-import Phaser/*, { GameObjects }*/ from 'phaser';
+import Phaser, { GameObjects } from 'phaser';
 import Card from './card';
 import { Deck } from './deck';
 
@@ -47,7 +47,7 @@ class PlaygroundScene extends Phaser.Scene {
 
    create() {
       const deck = new Deck(this);
-      //deck.Shuffle();
+      deck.Shuffle();
 
       // Deck testing code
       console.log(deck.cards);
@@ -59,33 +59,46 @@ class PlaygroundScene extends Phaser.Scene {
 
       this.cameras.main.setBackgroundColor('#408080');
 
-      //const card = this.add.sprite(88, 224, 'cardsDecks', 1);
-      //card.setInteractive({ draggable: true });
-      //this.input.setDraggable(card);
-
       let card12 = this.add.existing(deck.cards[12].container);
-      deck.flipCard(deck.cards[12], true);
+      
+      /*console.log(card12.getAt(2));
+      let card = card12.getAt(2);
+      console.log(card.faceUp);*/
+      //deck.flipCard(deck.cards[12], true);
       card12.setInteractive(new Phaser.Geom.Rectangle(-44, -62, 88, 124), Phaser.Geom.Rectangle.Contains);
       this.input.setDraggable(card12);
       card12.x = 248;
       card12.y = 224;
 
-      this.input.on('pointerdown', (_pointer: PointerEvent, container: Phaser.GameObjects.Container) => {
-         //this.children.bringToTop(card.gameObject);
-         console.log(container);
-         if (container) {
-            //deck.flipCard(container, !(container.faceUp));
-         }
+      this.input.on('gameobjectdown', (_pointer: PointerEvent, container: Phaser.GameObjects.Container) => {
+         //console.log(gameObject);
+         //console.log(gameObject.getAt(2).faceUp);  // It works, TypeScript is just being a pain
+         let card = container.getAt(2) as Card;
+         deck.flipCard(card, !(card.faceUp));
       });
+
 
       this.mousePositionText = this.add.text(10, 10, '', { color: '#ffffff' });
 
-      this.input.on('drag', (_pointer: PointerEvent, parentContainer: Phaser.GameObjects.Container, 
+      this.input.on('dragstart', (_pointer: PointerEvent, container: Phaser.GameObjects.Container) => {
+         // Save the original position at the start of the drag
+         container.setData('originX', container.x);
+         container.setData('originY', container.y);
+     });
+
+      this.input.on('drag', (_pointer: PointerEvent, container: Phaser.GameObjects.Container, 
                                 dragX: number, dragY: number) => {
-            parentContainer.x = dragX;
-            parentContainer.y = dragY;
+            container.setData({x: container.x, y: container.y});
+            container.x = dragX;
+            container.y = dragY;
          }
       );
+
+      this.input.on('dragend', (_pointer: PointerEvent, container: Phaser.GameObjects.Container) => {
+         // Move the container back to its original position when the drag ends
+         container.x = container.getData('originX');
+         container.y = container.getData('originY');
+     });
    }
 
    update() {
