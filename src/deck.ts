@@ -19,10 +19,8 @@ export class Deck {
                scene.add.container(0, 0)
             );
             this.cards.push(card);
-            //card.faceUpObject.setInteractive({ draggable: true });
-            //card.faceDownObject.setInteractive({ draggable: true });
             card.faceUpObject.setVisible(false);
-            card.faceDownObject.setVisible(true);
+            card.faceDownObject.setVisible(false);
             card.container.add([card.faceUpObject, card.faceDownObject, card]);
             card.container.getAt(2).setVisible(false); // It works, TypeScript is just being a pain
          }
@@ -41,6 +39,10 @@ export class Deck {
    public Deal = () => {
       this.Shuffle(); // Shuffle the cards
    };
+
+   public drawCard() {
+      return this.cards.pop();
+   }
 
    public flipCard(card: Card, faceUp: boolean) {
       card.faceUp = !card.faceUp;
