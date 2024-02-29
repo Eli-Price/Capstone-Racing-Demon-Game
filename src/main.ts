@@ -35,7 +35,7 @@ let endPile4: Phaser.GameObjects.Container[] = [];
 // Create arrays to store the piles
 const centerPiles = [centerPile1, centerPile2, centerPile3, centerPile4];
 const endPiles = [endPile1, endPile2, endPile3, endPile4];
-const drawPile = [];
+const drawPile: Phaser.GameObjects.Container[] = [];
 
 class PlaygroundScene extends Phaser.Scene {
    private mousePositionText!: Phaser.GameObjects.Text;
@@ -95,43 +95,42 @@ class PlaygroundScene extends Phaser.Scene {
       this.add.sprite(100, 308, 'cardsDecks', 1);
 
       const deck = new Deck(this);
-      deck.Shuffle();
-      console.log(this.children)
+      //deck.Shuffle();
 
       // Deal 1 card to each pile and remove them from the deck
-      centerPile1.push(deck.cards[51]);
-      deck.cards.pop();
-      centerPile2.push(deck.cards[50]);
-      deck.cards.pop();
-      centerPile3.push(deck.cards[49]);
-      deck.cards.pop();
-      centerPile4.push(deck.cards[48]);
-      deck.cards.pop();
-      endPile1.push(deck.cards[47]);
-      deck.cards.pop();
-      console.log(endPile1.length);
+      centerPile1.push(deck.cards[0]);
+      // deck.cards.pop();
+      this.flipCard(centerPile1[0], centerPile1[0].getAt(2).faceUp);
+      //console.log("This: " + centerPile1[0].getAt(2).faceUp);
+      centerPile2.push(deck.cards[13]);
+      // deck.cards.pop();
+      this.flipCard(centerPile2[0], centerPile2[0].getAt(2).faceUp);
+      centerPile3.push(deck.cards[1]);
+      // deck.cards.pop();
+      this.flipCard(centerPile3[0], centerPile3[0].getAt(2).faceUp);
+      centerPile4.push(deck.cards[14]);
+      // deck.cards.pop();
+      this.flipCard(centerPile4[0], centerPile4[0].getAt(2).faceUp);
+
+      let fakeContainer = this.add.container(0, 0);
+      fakeContainer.setInteractive(new Phaser.Geom.Rectangle(-44, -62, 88, 124), Phaser.Geom.Rectangle.Contains);
+
+      // Add the fake container to each end pile
+      for (let i = 0; i < endPiles.length; i++) {
+         endPiles[i].push(fakeContainer);
+      }
 
       this.renderCards();
-
-      // Set the card as interactive and draggable, position it at the corresponding pile, and flip it face up
-      // Probably move this to the Deal function later
-      for (let i = 0; i < centerPiles.length; i++) {
-         let card = this.add.existing(centerPiles[i][0]);
-         card.setInteractive(new Phaser.Geom.Rectangle(-44, -62, 88, 124), Phaser.Geom.Rectangle.Contains);
-         this.input.setDraggable(card);
-         card.x = centerPileX[i];
-         card.y = 300;
-         deck.flipCard(centerPiles[i][0], true);
-         // Store a reference to the pile in the card
-         card.setData('pile', centerPiles[i]);
-      }
       
+      
+
       // Functions happen on clicking a card here, also happens on clicking other objects
-      this.input.on('gameobjectdown', (_pointer: PointerEvent, container: Phaser.GameObjects.Container) => {
-         container.setDepth(20);
-         //console.log(gameObject.getAt(2).faceUp);  // It works, TypeScript is just being a pain
-         let card = container.getAt(2) as Card;
-         //deck.flipCard(container, !(card.faceUp));
+      this.input.on('pointerdown', (_pointer: PointerEvent) => {
+         let drawn = deck.drawCard();
+         if (drawn !== undefined) {
+            drawPile.push(drawn);
+         }
+         console.log(drawPile);
       });
 
       this.input.on('drag', (_pointer: PointerEvent, container: Phaser.GameObjects.Container, 
@@ -151,55 +150,51 @@ class PlaygroundScene extends Phaser.Scene {
      });
 
       this.input.on('dragend', (_pointer: PointerEvent, container: Phaser.GameObjects.Container) => {
-         // Move the container back to its original position when the drag ends
          container.setDepth(2);
          for (let i = 0; i < centerPileX.length; i++) {
             if (container.x >= centerPileX[i] - 44 && container.x <= centerPileX[i] + 44 &&
                   container.y >= centerPileY - 62 && container.y <= centerPileY + 62) {
                // The card is within the bounds of the pile, so add it to the pile's array
-               centerPiles[i].push(container/*.getAt(2) as Card*/);
+               centerPiles[i].push(container);
                // Make the card stick to the pile
                container.x = centerPileX[i];
                container.y = centerPileY + 20 * (centerPiles[i].length - 1);
                // Remove the card from its original pile
                let originalPile = container.getData('pile') as Phaser.GameObjects.Container[];
-               let index = originalPile.indexOf(container/*.getAt(2) as Card*/);
+               let index = originalPile.indexOf(container);
                if (index !== -1) {
                   originalPile.splice(index, 1);
                }
                // Store a reference to the new pile in the card
                container.setData('pile', centerPiles[i]);
-               //console.log(centerPiles[i]);
+               //console.log(container.getData('pile'));
                break;
             } else if ((container.x >= endPileX[i] - 44 || container.x <= endPileX[i] + 44 ||
                container.y >= endPileY - 62 || container.y <= endPileY + 62)) {
-                  for (let i = 0; i < endPiles.length; i++) {
-                     for (let j = 0; j < endPiles[i].length; j++) {
-                        console.log("Container bounds:", container.getBounds());
-                        console.log("Card bounds:", endPiles[i][j].getBounds());
-                        if (Phaser.Geom.Intersects.RectangleToRectangle(container.getBounds(), endPiles[i][j].getBounds())) {
-                           console.log(this.canPlaceOnEndPile(container, endPiles[i], j));
-                           if (this.canPlaceOnEndPile(container, endPiles[i], j)) {
-                              // Remove the card from its original pile
-                              console.log(endPiles[i][j].getBounds());
-                              let originalPile = container.getData('pile') as Phaser.GameObjects.Container[];
-                              let index = originalPile.indexOf(container);
-                              if (index !== -1) {
-                                    originalPile.splice(index, 1);
-                              }
-                              // Add the card to the end pile
-                              endPiles[i].push(container);
-            
-                              // Store a reference to the new pile in the card
-                              container.setData('pile', endPiles[i]);
-                              break;
-                           }
+                  //console.log("Made it to endPiles checks")
+               for (let i = 0; i < endPiles.length; i++) {
+                  for (let j = 0; j < endPiles[i].length; j++) {
+                     //console.log("Container bounds:", container.getBounds());
+                     //console.log("Card bounds:", endPiles[i][j].getBounds());
+                     if (this.canPlaceOnEndPile(container, endPiles[i], i)) {
+                        // Remove the card from its original pile
+                        //console.log(endPiles[i][j].getBounds());
+                        let originalPile = container.getData('pile') as Phaser.GameObjects.Container[];
+                        let index = originalPile.indexOf(container);
+                        if (index !== -1) {
+                              originalPile.splice(index, 1);
                         }
+                        // Add the card to the end pile
+                        endPiles[i].push(container);
+      
+                        // Store a reference to the new pile in the card
+                        container.setData('pile', endPiles[i]);
+                        break;
                      }
                   }
+               }
             }
          }
-         console.log(endPile1.length);
          this.renderCards();
       });
    }
@@ -212,7 +207,7 @@ class PlaygroundScene extends Phaser.Scene {
       this.mousePositionText.setText(`Mouse Position: (${mouseX}, ${mouseY})`);
 
       if (false) {
-         this.renderCards();
+         //this.renderCards();
       }
    }
 
@@ -222,8 +217,7 @@ class PlaygroundScene extends Phaser.Scene {
    // Perhaps call this on an if() which works when the server sends back a new state of the game
    renderCards() {
       // Clear the current cards
-      this.children.removeAll();
-      console.log(endPile1.length);
+      //this.children.removeAll();
       this.mousePositionText = this.add.text(10, 10, '', { color: '#ffffff' });
 
       // Draw the places cards can be placed
@@ -238,8 +232,11 @@ class PlaygroundScene extends Phaser.Scene {
       deckBottom[8] = this.add.sprite(100, centerPileY, 'deckBottomTexture');
 
       // Add the deck sprite
-      this.add.sprite(100, 308, 'cardsDecks', 1);
-  
+      let deckSprite = this.add.sprite(100, 308, 'cardsDecks', 1);
+      deckSprite.setInteractive();
+      deckSprite.on('clicked', () => {
+      });
+      
       // Draw each card at its appropriate position for centerPiles
       for (let i = 0; i < centerPiles.length; i++) {
          for (let j = 0; j < centerPiles[i].length; j++) {
@@ -256,20 +253,30 @@ class PlaygroundScene extends Phaser.Scene {
       // Draw each card at its appropriate position for endPiles
       for (let i = 0; i < endPiles.length; i++) {
          if (endPiles[i].length > 0) {
-             let j = endPiles[i].length - 1; // Get the last card in the pile
-             let card = this.add.existing(endPiles[i][j]);
-             card.setInteractive(new Phaser.Geom.Rectangle(-44, -62, 88, 124), Phaser.Geom.Rectangle.Contains);
-             this.input.setDraggable(card);
-             card.x = endPileX[i];
-             card.y = endPileY;
-             card.setVisible(true);
-             console.log("Card Position:", card.x, card.y);
-             console.log(card.visible);
-             card.setDepth(j);
-             // Store a reference to the pile in the card
-             card.setData('pile', endPiles[i]);
-             console.log(card.getData('pile'));
+            let j = endPiles[i].length - 1; // Get the last card in the pile
+            let card = this.add.existing(endPiles[i][j]);
+            card.setInteractive(new Phaser.Geom.Rectangle(-44, -62, 88, 124), Phaser.Geom.Rectangle.Contains);
+            //this.input.setDraggable(card);
+            card.x = endPileX[i];
+            card.y = endPileY;
+            //card.setVisible(true);
+            card.setDepth(j);
+            // Store a reference to the pile in the card
+            card.setData('pile', endPiles[i]);
          }
+      }
+      // Draw each card at its appropriate position for drawPile
+      for (let i = 0; i < drawPile.length; i++) {
+         let card = this.add.existing(drawPile[i]);
+         card.setInteractive(new Phaser.Geom.Rectangle(-44, -62, 88, 124), Phaser.Geom.Rectangle.Contains);
+         this.input.setDraggable(card);
+         card.x = 230;
+         card.y = centerPileY;
+         console.log(card.x, card.y);
+         this.flipCard(card, card.getAt(2).faceUp);
+         card.setDepth(i + 5);
+         // Store a reference to the pile in the card
+         card.setData('pile', drawPile);
       }
    }
 
@@ -281,13 +288,26 @@ class PlaygroundScene extends Phaser.Scene {
       }
 
       // If the pile is empty, it can only accept a card with the lowest value
-      if (pile.length === 0) {
+      if (pile.length === 1) {
           return card.value === 0;
       } else {
           // If the pile is not empty, it can only accept a card with a value
           // that is one greater than the value of the top card in the pile
           let topCard = pile[pile.length - 1].getAt(2) as Card;
           return card.value === topCard.value + 1;
+      }
+   }
+
+   flipCard(container: Phaser.GameObjects.Container, faceUp: boolean) {
+      let card = container.getAt(2) as Card;
+      // Initialized cards need to be flipped differently than cards that are already in the game
+      if (card.faceDownObject.visible === card.faceUpObject.visible) {
+         card.faceUp = !faceUp;
+         card.faceUpObject.visible = card.faceUp;
+      } else {
+         card.faceUp = !card.faceUp;
+         card.faceUpObject.visible = faceUp;
+         card.faceDownObject.visible = !faceUp;
       }
    }
 }

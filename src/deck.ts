@@ -38,16 +38,10 @@ export class Deck {
    // Deals cards in a setup for racing demon
    public Deal = () => {
       this.Shuffle(); // Shuffle the cards
+      
    };
 
    public drawCard() {
       return this.cards.pop();
-   }
-
-   public flipCard(container: Phaser.GameObjects.Container, faceUp: boolean) {
-      let card = container.getAt(2) as Card;
-      card.faceUp = !card.faceUp;
-      card.faceUpObject.visible = faceUp;
-      card.faceDownObject.visible = !faceUp;
    }
 }
