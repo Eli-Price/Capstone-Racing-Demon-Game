@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 
-// This is a sprite because a raw gameObject can't render and breaks everything.
+// This is a sprite because a raw gameObject can't render and breaks everything
 export default class Card extends Phaser.GameObjects.Sprite{
    name: string;
    suit: number;

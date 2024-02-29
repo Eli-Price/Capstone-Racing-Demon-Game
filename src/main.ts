@@ -12,28 +12,30 @@ import { Server } from 'socket.io';
 // Positions of the centerPiles
 const centerPileX = [420, 540, 660, 780];
 const centerPileY = 300;
+const endPileX = [420, 540, 660, 780];
+const endPileY = 120;
 
 let suits = card_config.Suits;
 let values = card_config.Values;
 
-//const suits = ['Hearts', 'Diamonds', 'Clubs', 'Spades'];
-let deckBottom = [];
+let deckBottom: Phaser.GameObjects.Sprite[] = [];
 
 // Create arrays to store the cards in each center pile
-let centerPile1: Card[] = [];
-let centerPile2: Card[] = [];
-let centerPile3: Card[] = [];
-let centerPile4: Card[] = [];
+let centerPile1: Phaser.GameObjects.Container[] = [];
+let centerPile2: Phaser.GameObjects.Container[] = [];
+let centerPile3: Phaser.GameObjects.Container[] = [];
+let centerPile4: Phaser.GameObjects.Container[] = [];
 
 // Create arrays to store the cards in each center pile
-let endPile1: Card[] = [];
-let endPile2: Card[] = [];
-let endPile3: Card[] = [];
-let endPile4: Card[] = [];
+let endPile1: Phaser.GameObjects.Container[] = [];
+let endPile2: Phaser.GameObjects.Container[] = [];
+let endPile3: Phaser.GameObjects.Container[] = [];
+let endPile4: Phaser.GameObjects.Container[] = [];
 
 // Create arrays to store the piles
 const centerPiles = [centerPile1, centerPile2, centerPile3, centerPile4];
 const endPiles = [endPile1, endPile2, endPile3, endPile4];
+const drawPile = [];
 
 class PlaygroundScene extends Phaser.Scene {
    private mousePositionText!: Phaser.GameObjects.Text;
@@ -82,6 +84,7 @@ class PlaygroundScene extends Phaser.Scene {
       // Draw the places cards can be placed
       for (let i = 0; i < centerPileX.length; i++) {
          deckBottom[i] = this.add.sprite(centerPileX[i], centerPileY - 180, 'cards' + suits[i], 0).setTint(0x408080);
+         deckBottom[i].setDepth(1);
       }
       for (let i = 0; i < centerPileX.length; i++) {
          deckBottom[i + 4] = this.add.sprite(centerPileX[i], centerPileY, 'deckBottomTexture');
@@ -104,13 +107,16 @@ class PlaygroundScene extends Phaser.Scene {
       deck.cards.pop();
       centerPile4.push(deck.cards[48]);
       deck.cards.pop();
+      endPile1.push(deck.cards[47]);
+      deck.cards.pop();
+      console.log(endPile1.length);
 
       this.renderCards();
 
       // Set the card as interactive and draggable, position it at the corresponding pile, and flip it face up
       // Probably move this to the Deal function later
       for (let i = 0; i < centerPiles.length; i++) {
-         let card = this.add.existing(centerPiles[i][0].container);
+         let card = this.add.existing(centerPiles[i][0]);
          card.setInteractive(new Phaser.Geom.Rectangle(-44, -62, 88, 124), Phaser.Geom.Rectangle.Contains);
          this.input.setDraggable(card);
          card.x = centerPileX[i];
@@ -125,9 +131,8 @@ class PlaygroundScene extends Phaser.Scene {
          container.setDepth(20);
          //console.log(gameObject.getAt(2).faceUp);  // It works, TypeScript is just being a pain
          let card = container.getAt(2) as Card;
-         //deck.flipCard(card, !(card.faceUp));
+         //deck.flipCard(container, !(card.faceUp));
       });
-      console.log(this.children);
 
       this.input.on('drag', (_pointer: PointerEvent, container: Phaser.GameObjects.Container, 
                                 dragX: number, dragY: number) => {
@@ -152,27 +157,49 @@ class PlaygroundScene extends Phaser.Scene {
             if (container.x >= centerPileX[i] - 44 && container.x <= centerPileX[i] + 44 &&
                   container.y >= centerPileY - 62 && container.y <= centerPileY + 62) {
                // The card is within the bounds of the pile, so add it to the pile's array
-               centerPiles[i].push(container.getAt(2) as Card);
+               centerPiles[i].push(container/*.getAt(2) as Card*/);
                // Make the card stick to the pile
                container.x = centerPileX[i];
                container.y = centerPileY + 20 * (centerPiles[i].length - 1);
                // Remove the card from its original pile
-               let originalPile = container.getData('pile') as Card[];
-               let index = originalPile.indexOf(container.getAt(2) as Card);
+               let originalPile = container.getData('pile') as Phaser.GameObjects.Container[];
+               let index = originalPile.indexOf(container/*.getAt(2) as Card*/);
                if (index !== -1) {
                   originalPile.splice(index, 1);
                }
                // Store a reference to the new pile in the card
                container.setData('pile', centerPiles[i]);
-               console.log(centerPiles[i]);
+               //console.log(centerPiles[i]);
                break;
-            } else if (!(container.x >= centerPileX[i] - 44 || container.x <= centerPileX[i] + 44 ||
-               container.y >= centerPileY - 62 || container.y <= centerPileY + 62)) {
-               // The card isn't within the bounds of the pile, so move it back to its original position
-               container.x = container.getData('originX');
-               container.y = container.getData('originY');
+            } else if ((container.x >= endPileX[i] - 44 || container.x <= endPileX[i] + 44 ||
+               container.y >= endPileY - 62 || container.y <= endPileY + 62)) {
+                  for (let i = 0; i < endPiles.length; i++) {
+                     for (let j = 0; j < endPiles[i].length; j++) {
+                        console.log("Container bounds:", container.getBounds());
+                        console.log("Card bounds:", endPiles[i][j].getBounds());
+                        if (Phaser.Geom.Intersects.RectangleToRectangle(container.getBounds(), endPiles[i][j].getBounds())) {
+                           console.log(this.canPlaceOnEndPile(container, endPiles[i], j));
+                           if (this.canPlaceOnEndPile(container, endPiles[i], j)) {
+                              // Remove the card from its original pile
+                              console.log(endPiles[i][j].getBounds());
+                              let originalPile = container.getData('pile') as Phaser.GameObjects.Container[];
+                              let index = originalPile.indexOf(container);
+                              if (index !== -1) {
+                                    originalPile.splice(index, 1);
+                              }
+                              // Add the card to the end pile
+                              endPiles[i].push(container);
+            
+                              // Store a reference to the new pile in the card
+                              container.setData('pile', endPiles[i]);
+                              break;
+                           }
+                        }
+                     }
+                  }
             }
          }
+         console.log(endPile1.length);
          this.renderCards();
       });
    }
@@ -196,7 +223,7 @@ class PlaygroundScene extends Phaser.Scene {
    renderCards() {
       // Clear the current cards
       this.children.removeAll();
-
+      console.log(endPile1.length);
       this.mousePositionText = this.add.text(10, 10, '', { color: '#ffffff' });
 
       // Draw the places cards can be placed
@@ -205,20 +232,18 @@ class PlaygroundScene extends Phaser.Scene {
       }
       for (let i = 0; i < centerPileX.length; i++) {
          deckBottom[i + 4] = this.add.sprite(centerPileX[i], centerPileY, 'deckBottomTexture');
+         deckBottom[i + 4].setDepth(0);
       }
       deckBottom[8] = this.add.sprite(230, centerPileY, 'deckBottomTexture');
+      deckBottom[8] = this.add.sprite(100, centerPileY, 'deckBottomTexture');
 
       // Add the deck sprite
       this.add.sprite(100, 308, 'cardsDecks', 1);
-      
-
-      // Add the deck sprite
-      this.add.sprite(100, 310, 'cardsDecks', 1);
   
-      // Draw each card at its appropriate position
+      // Draw each card at its appropriate position for centerPiles
       for (let i = 0; i < centerPiles.length; i++) {
          for (let j = 0; j < centerPiles[i].length; j++) {
-            let card = this.add.existing(centerPiles[i][j].container);
+            let card = this.add.existing(centerPiles[i][j]);
             card.setInteractive(new Phaser.Geom.Rectangle(-44, -62, 88, 124), Phaser.Geom.Rectangle.Contains);
             this.input.setDraggable(card);
             card.x = centerPileX[i];
@@ -227,6 +252,42 @@ class PlaygroundScene extends Phaser.Scene {
             // Store a reference to the pile in the card
             card.setData('pile', centerPiles[i]);
          }
+      }
+      // Draw each card at its appropriate position for endPiles
+      for (let i = 0; i < endPiles.length; i++) {
+         if (endPiles[i].length > 0) {
+             let j = endPiles[i].length - 1; // Get the last card in the pile
+             let card = this.add.existing(endPiles[i][j]);
+             card.setInteractive(new Phaser.Geom.Rectangle(-44, -62, 88, 124), Phaser.Geom.Rectangle.Contains);
+             this.input.setDraggable(card);
+             card.x = endPileX[i];
+             card.y = endPileY;
+             card.setVisible(true);
+             console.log("Card Position:", card.x, card.y);
+             console.log(card.visible);
+             card.setDepth(j);
+             // Store a reference to the pile in the card
+             card.setData('pile', endPiles[i]);
+             console.log(card.getData('pile'));
+         }
+      }
+   }
+
+   canPlaceOnEndPile(container: Phaser.GameObjects.Container, pile: Phaser.GameObjects.Container[], pileIndex: number): boolean {
+      // Check if the suit of the card matches the suit of the pile
+      let card = container.getAt(2) as Card;
+      if (card.suit !== pileIndex) {
+          return false;
+      }
+
+      // If the pile is empty, it can only accept a card with the lowest value
+      if (pile.length === 0) {
+          return card.value === 0;
+      } else {
+          // If the pile is not empty, it can only accept a card with a value
+          // that is one greater than the value of the top card in the pile
+          let topCard = pile[pile.length - 1].getAt(2) as Card;
+          return card.value === topCard.value + 1;
       }
    }
 }

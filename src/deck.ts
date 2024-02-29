@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import Card from './card';
 
 export class Deck {
-   public cards: Card[] = [];
+   public cards: Phaser.GameObjects.Container[] = [];
 
    constructor(scene: Phaser.Scene) {
       const suits = ['Hearts', 'Diamonds', 'Clubs', 'Spades'];
@@ -18,11 +18,11 @@ export class Deck {
                new Phaser.GameObjects.Sprite(scene, 0, 0, 'cardBacks', 0),
                scene.add.container(0, 0)
             );
-            this.cards.push(card);
             card.faceUpObject.setVisible(false);
             card.faceDownObject.setVisible(false);
             card.container.add([card.faceUpObject, card.faceDownObject, card]);
             card.container.getAt(2).setVisible(false); // It works, TypeScript is just being a pain
+            this.cards.push(card.container);
          }
       }
    }
@@ -44,7 +44,8 @@ export class Deck {
       return this.cards.pop();
    }
 
-   public flipCard(card: Card, faceUp: boolean) {
+   public flipCard(container: Phaser.GameObjects.Container, faceUp: boolean) {
+      let card = container.getAt(2) as Card;
       card.faceUp = !card.faceUp;
       card.faceUpObject.visible = faceUp;
       card.faceDownObject.visible = !faceUp;

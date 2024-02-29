@@ -2,8 +2,8 @@ import Phaser from 'phaser';
 
 export function createDeckBottom(scene: Phaser.Scene) {
   let graphics = scene.add.graphics();
-  drawDeckBottom(graphics, 0, 0, 88, 124, 10, 0xD6D6D6, 1, 2.5);
-  graphics.generateTexture('deckBottomTexture', 88, 124);
+  drawDeckBottom(graphics, 0, 0, 86, 122, 10, 0xD6D6D6, 1, 2.5);
+  graphics.generateTexture('deckBottomTexture', 86, 122);
   graphics.destroy();
   
 }
