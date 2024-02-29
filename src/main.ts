@@ -95,22 +95,29 @@ class PlaygroundScene extends Phaser.Scene {
       this.add.sprite(100, 308, 'cardsDecks', 1);
 
       const deck = new Deck(this);
-      //deck.Shuffle();
+      deck.Shuffle();
 
       // Deal 1 card to each pile and remove them from the deck
-      centerPile1.push(deck.cards[0]);
-      // deck.cards.pop();
-      this.flipCard(centerPile1[0], centerPile1[0].getAt(2).faceUp);
-      //console.log("This: " + centerPile1[0].getAt(2).faceUp);
-      centerPile2.push(deck.cards[13]);
-      // deck.cards.pop();
-      this.flipCard(centerPile2[0], centerPile2[0].getAt(2).faceUp);
-      centerPile3.push(deck.cards[1]);
-      // deck.cards.pop();
-      this.flipCard(centerPile3[0], centerPile3[0].getAt(2).faceUp);
-      centerPile4.push(deck.cards[14]);
-      // deck.cards.pop();
-      this.flipCard(centerPile4[0], centerPile4[0].getAt(2).faceUp);
+      centerPile1.push(deck.cards[51]);
+      deck.cards.pop();
+      centerPile1[0].getAt(0).setVisible(true);
+
+      //this.flipCard(centerPile1[0], centerPile1[0].getAt(2).faceUp);
+      centerPile2.push(deck.cards[50]);
+      deck.cards.pop();
+      centerPile2[0].getAt(0).setVisible(true);
+
+      //this.flipCard(centerPile2[0], centerPile2[0].getAt(2).faceUp);55
+      centerPile3.push(deck.cards[49]);
+      deck.cards.pop();
+      centerPile3[0].getAt(0).setVisible(true);
+
+      //this.flipCard(centerPile3[0], centerPile3[0].getAt(2).faceUp);
+      centerPile4.push(deck.cards[48]);
+      deck.cards.pop();
+      centerPile4[0].getAt(0).setVisible(true);
+
+      //this.flipCard(centerPile4[0], centerPile4[0].getAt(2).faceUp);
 
       let fakeContainer = this.add.container(0, 0);
       fakeContainer.setInteractive(new Phaser.Geom.Rectangle(-44, -62, 88, 124), Phaser.Geom.Rectangle.Contains);
@@ -126,11 +133,20 @@ class PlaygroundScene extends Phaser.Scene {
 
       // Functions happen on clicking a card here, also happens on clicking other objects
       this.input.on('pointerdown', (_pointer: PointerEvent) => {
-         let drawn = deck.drawCard();
-         if (drawn !== undefined) {
-            drawPile.push(drawn);
+         // Dupe code on variable declarations, probably could be cleaned up to be nicer
+         // These nested ifs look like trash, should be cleaned up soon
+         var mouseX = this.input.mousePointer.x;
+         var mouseY = this.input.mousePointer.y;
+         console.log("Mouse Pos: " + mouseX, mouseY);
+         if (mouseX >= 56 && mouseX <= 144 && mouseY >= 238 && mouseY <= 362) {
+            let drawn = deck.drawCard();
+            if (drawn !== undefined) {
+               drawPile.push(drawn);
+            }
+            console.log(drawPile);
+            this.renderCards();
          }
-         console.log(drawPile);
+         console.log(deck.cards.length);
       });
 
       this.input.on('drag', (_pointer: PointerEvent, container: Phaser.GameObjects.Container, 
@@ -234,8 +250,6 @@ class PlaygroundScene extends Phaser.Scene {
       // Add the deck sprite
       let deckSprite = this.add.sprite(100, 308, 'cardsDecks', 1);
       deckSprite.setInteractive();
-      deckSprite.on('clicked', () => {
-      });
       
       // Draw each card at its appropriate position for centerPiles
       for (let i = 0; i < centerPiles.length; i++) {
@@ -273,7 +287,9 @@ class PlaygroundScene extends Phaser.Scene {
          card.x = 230;
          card.y = centerPileY;
          console.log(card.x, card.y);
-         this.flipCard(card, card.getAt(2).faceUp);
+         // Set faceup sprite to visible
+         card.getAt(0).setVisible(true);
+         //this.flipCard(card, card.getAt(2).faceUp);
          card.setDepth(i + 5);
          // Store a reference to the pile in the card
          card.setData('pile', drawPile);

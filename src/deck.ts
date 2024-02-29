@@ -13,7 +13,7 @@ export class Deck {
                suits[suit] + value,
                suit,
                value,
-               false,
+               true,
                new Phaser.GameObjects.Sprite(scene, 0, 0, 'cards' + suits[suit], value),
                new Phaser.GameObjects.Sprite(scene, 0, 0, 'cardBacks', 0),
                scene.add.container(0, 0)
