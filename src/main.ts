@@ -137,16 +137,21 @@ class PlaygroundScene extends Phaser.Scene {
          // These nested ifs look like trash, should be cleaned up soon
          var mouseX = this.input.mousePointer.x;
          var mouseY = this.input.mousePointer.y;
-         console.log("Mouse Pos: " + mouseX, mouseY);
+         //console.log("Mouse Pos: " + mouseX, mouseY);
          if (mouseX >= 56 && mouseX <= 144 && mouseY >= 238 && mouseY <= 362) {
             let drawn = deck.drawCard();
             if (drawn !== undefined) {
                drawPile.push(drawn);
+               //console.log(drawPile.length);
+            } else {
+               length = drawPile.length;
+               for (let i = 0; i < length; i++) {
+                  let card = drawPile.pop();
+                  deck.cards[i] = card;  // This error doesn't break anything, an undefined cannot reach this point
+               }
             }
-            console.log(drawPile);
-            this.renderCards();
+         this.renderCards();
          }
-         console.log(deck.cards.length);
       });
 
       this.input.on('drag', (_pointer: PointerEvent, container: Phaser.GameObjects.Container, 
@@ -154,47 +159,58 @@ class PlaygroundScene extends Phaser.Scene {
             container.setData({x: container.x, y: container.y});
             container.x = dragX;
             container.y = dragY;
+            let pile = container.getData('pile')
+            if ( !(pile === drawPile)) {
+               for (let i = 0; i < pile.length; i++) {
+                  let card = pile[i];
+                  if (card.getAt(2).value <= container.getAt(2).value) {
+                     card.x = container.x;
+                     card.y = container.y + 20 * i;
+                     card.depth = container.depth + 1 * i;
+                  }
+               }
+            }
          }
       );
       
       // These two are for moving the card back to its original position after dragging if a valid move isn't made
       this.input.on('dragstart', (_pointer: PointerEvent, container: Phaser.GameObjects.Container) => {
          // Save the original position at the start of the drag
-         container.setDepth(20);
+         container.setDepth(60);
          container.setData('originX', container.x);
          container.setData('originY', container.y);
      });
 
+      // Gonna cut up a bunch of this logic later now that I understand how it works, the server
+      //   will be doing a lot of the work here, or probably checking the work before allowing it to happen
       this.input.on('dragend', (_pointer: PointerEvent, container: Phaser.GameObjects.Container) => {
-         container.setDepth(2);
          for (let i = 0; i < centerPileX.length; i++) {
             if (container.x >= centerPileX[i] - 44 && container.x <= centerPileX[i] + 44 &&
-                  container.y >= centerPileY - 62 && container.y <= centerPileY + 62) {
-               // The card is within the bounds of the pile, so add it to the pile's array
-               centerPiles[i].push(container);
-               // Make the card stick to the pile
-               container.x = centerPileX[i];
-               container.y = centerPileY + 20 * (centerPiles[i].length - 1);
-               // Remove the card from its original pile
-               let originalPile = container.getData('pile') as Phaser.GameObjects.Container[];
-               let index = originalPile.indexOf(container);
-               if (index !== -1) {
-                  originalPile.splice(index, 1);
+                  container.y >= centerPileY + ((centerPiles[i].length - 1) * 20) - 62 && 
+                  container.y <= centerPileY + ((centerPiles[i].length - 1) * 20) + 62) {
+               // console.log("CenterPile length: " + centerPiles[i].length)
+               if (this.canAddToCenterPile(container, centerPiles[i][centerPiles[i].length - 1])) {
+                  // The card is within the bounds of the pile, so add it to the pile's array
+                  //centerPiles[i].push(container);
+                  // Remove the card from its original pile
+                  let originalPile = container.getData('pile') as Phaser.GameObjects.Container[];
+                  let index = originalPile.indexOf(container);
+                  if (index !== -1) {
+                     let cardsToMove = originalPile.splice(index);
+                     centerPiles[i].push(...cardsToMove);
+                  }
+                  this.renderCards();
+                  break;
                }
                // Store a reference to the new pile in the card
                container.setData('pile', centerPiles[i]);
-               //console.log(container.getData('pile'));
                break;
             } else if ((container.x >= endPileX[i] - 44 || container.x <= endPileX[i] + 44 ||
                container.y >= endPileY - 62 || container.y <= endPileY + 62)) {
-                  //console.log("Made it to endPiles checks")
                for (let i = 0; i < endPiles.length; i++) {
                   for (let j = 0; j < endPiles[i].length; j++) {
-                     //console.log("Container bounds:", container.getBounds());
-                     //console.log("Card bounds:", endPiles[i][j].getBounds());
                      if (this.canPlaceOnEndPile(container, endPiles[i], i)) {
                         // Remove the card from its original pile
-                        //console.log(endPiles[i][j].getBounds());
                         let originalPile = container.getData('pile') as Phaser.GameObjects.Container[];
                         let index = originalPile.indexOf(container);
                         if (index !== -1) {
@@ -233,7 +249,7 @@ class PlaygroundScene extends Phaser.Scene {
    // Perhaps call this on an if() which works when the server sends back a new state of the game
    renderCards() {
       // Clear the current cards
-      //this.children.removeAll();
+      this.children.removeAll();
       this.mousePositionText = this.add.text(10, 10, '', { color: '#ffffff' });
 
       // Draw the places cards can be placed
@@ -286,7 +302,7 @@ class PlaygroundScene extends Phaser.Scene {
          this.input.setDraggable(card);
          card.x = 230;
          card.y = centerPileY;
-         console.log(card.x, card.y);
+         //console.log(card.x, card.y);
          // Set faceup sprite to visible
          card.getAt(0).setVisible(true);
          //this.flipCard(card, card.getAt(2).faceUp);
@@ -326,6 +342,35 @@ class PlaygroundScene extends Phaser.Scene {
          card.faceDownObject.visible = !faceUp;
       }
    }
+
+   canAddToCenterPile(cardToAdd: Phaser.GameObjects.Container, bottomCard: Phaser.GameObjects.Container): boolean {
+      // Check if the value of the card to add is one less than the value of the bottom card
+      let cardAdd = cardToAdd.getAt(2) as Card;
+      console.log(bottomCard);
+      if (cardAdd.value === 12 && bottomCard === undefined) {
+         return true;
+      } else if (bottomCard === undefined) {
+         return false;
+      }
+      
+      let cardBottom = bottomCard.getAt(2) as Card;
+      console.log(cardBottom.value);
+      if (cardAdd.value !== cardBottom.value - 1) {
+         return false;
+      }
+  
+      // Check if the suits are of opposite colors
+      const redSuits = [suits.Hearts, suits.Diamonds];
+      const blackSuits = [suits.Clubs, suits.Spades];
+  
+      if ((redSuits.includes(cardAdd.suit) && redSuits.includes(cardBottom.suit)) ||
+           (blackSuits.includes(cardAdd.suit) && blackSuits.includes(cardBottom.suit))) {
+         return false;
+      }
+  
+      // If the card passed both checks, it can be added to the pile
+      return true;
+  }
 }
 
 
