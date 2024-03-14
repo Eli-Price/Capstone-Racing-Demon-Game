@@ -1,14 +1,14 @@
-import Phaser from 'phaser';
-import Card from './card';
+//import Phaser from 'phaser';
+import Card from './card.js';
 
 export class Deck {
-   public cards: Phaser.GameObjects.Container[] = [];
+   cards = [];
 
-   constructor(scene: Phaser.Scene) {
+   constructor(scene) {
       const suits = ['Hearts', 'Diamonds', 'Clubs', 'Spades'];
       for (let suit = 0; suit < suits.length; suit++) {
          for (let value = 0; value < 13; value++) {
-            let card: Card = new Card(
+            let card = new Card(
                scene,
                suits[suit] + value,
                suit,
@@ -28,7 +28,7 @@ export class Deck {
    }
 
    // Shuffle the cards using the Fisher-Yates algorithm
-   public Shuffle() {
+   Shuffle() {
       for (let i = this.cards.length - 1; i > 0; --i) {
          const j = Math.floor(Math.random() * (i + 1));
          [this.cards[i], this.cards[j]] = [this.cards[j], this.cards[i]];
@@ -36,12 +36,12 @@ export class Deck {
    }
 
    // Deals cards in a setup for racing demon
-   public Deal = () => {
+   Deal = () => {
       this.Shuffle(); // Shuffle the cards
       
    };
 
-   public drawCard() {
+   drawCard() {
       return this.cards.pop();
    }
 }

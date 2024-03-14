@@ -1,6 +1,6 @@
-import Phaser from 'phaser';
+//import Phaser from 'phaser';
 
-export function createDeckBottom(scene: Phaser.Scene) {
+export function createDeckBottom(scene) {
   let graphics = scene.add.graphics();
   drawDeckBottom(graphics, 0, 0, 86, 122, 10, 0xD6D6D6, 1, 2.5);
   graphics.generateTexture('deckBottomTexture', 86, 122);
@@ -8,7 +8,7 @@ export function createDeckBottom(scene: Phaser.Scene) {
   
 }
 
-export function drawDeckBottom(graphics: Phaser.GameObjects.Graphics, x: number, y: number, width: number, height: number, radius: number, color: number, alpha: number, dotSize: number) {
+export function drawDeckBottom(graphics, x, y, width, height, radius, color, alpha, dotSize) {
     drawDottedLine(graphics, x + radius, y, x + width - radius, y, color, alpha, dotSize); // Top
     drawDottedLine(graphics, x, y + radius, x, y + height - radius, color, alpha, dotSize); // Left
     drawDottedLine(graphics, x + width, y + radius, x + width, y + height - radius, color, alpha, dotSize); // Right
@@ -20,7 +20,7 @@ export function drawDeckBottom(graphics: Phaser.GameObjects.Graphics, x: number,
     drawDottedArc(graphics, x + radius, y + height - radius, radius, 0.5 * Math.PI, Math.PI, color, alpha, dotSize); // Bottom-left corner
 }
 
-function drawDottedLine(graphics: Phaser.GameObjects.Graphics, x1: number, y1: number, x2: number, y2: number, color: number, alpha: number, dotSize: number) {
+function drawDottedLine(graphics, x1, y1, x2, y2, color, alpha, dotSize) {
     let distance = Phaser.Math.Distance.Between(x1, y1, x2, y2);
     let count = distance / (dotSize * 3);
     let dx = (x2 - x1) / count;
@@ -32,7 +32,7 @@ function drawDottedLine(graphics: Phaser.GameObjects.Graphics, x1: number, y1: n
     }
 }
 
-function drawDottedArc(graphics: Phaser.GameObjects.Graphics, x: number, y: number, radius: number, startAngle: number, endAngle: number, color: number, alpha: number, dotSize: number) {
+function drawDottedArc(graphics, x, y, radius, startAngle, endAngle, color, alpha, dotSize) {
     let distance = Math.abs(startAngle - endAngle) * radius;
     let count = distance / (dotSize * 3);
     let dAngle = (endAngle - startAngle) / count;

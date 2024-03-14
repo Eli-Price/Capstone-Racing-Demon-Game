@@ -1,13 +1,12 @@
-import Phaser, { GameObjects, Textures } from 'phaser';
-import Card from './card';
-import { Deck } from './deck';
-import { createDeckBottom, drawDeckBottom } from './deck_bottom';
-import * as card_config from './card_config';
-import express from 'express';
+//import Phaser, { GameObjects, Textures } from './phaser';
+import Card from './card.js';
+import { Deck } from './deck.js';
+import { createDeckBottom, drawDeckBottom } from './deck_bottom.js';
+/*import express from 'express';
 import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { Server } from 'socket.io';
+import { Server } from 'socket.io';*/
 
 // Positions of the centerPiles
 const centerPileX = [420, 540, 660, 780];
@@ -15,64 +14,105 @@ const centerPileY = 300;
 const endPileX = [420, 540, 660, 780];
 const endPileY = 120;
 
-let suits = card_config.Suits;
-let values = card_config.Values;
+//let suits = card_config.Suits;
+//let values = card_config.Values;
 
-let deckBottom: Phaser.GameObjects.Sprite[] = [];
+// These enums are a gross hack, if they stay they go to another file
+//NON CONST enum for reverse mapping
+const suits = (() => {
+   const _enum = {
+      Hearts: 0,
+      Diamonds: 1,
+      Clubs: 2,
+      Spades: 3,
+   };
+
+   const _reverseEnum = {};
+   for (const key in _enum) {
+      _reverseEnum[_enum[key]] = key;
+   }
+   return Object.freeze(Object.assign({}, _enum, _reverseEnum));
+})();
+
+//NON CONST enum for reverse mapping
+const values = (() => {
+   const _enum = {
+      Ace: 0,
+      Two: 1,
+      Three: 2,
+      Four: 3,
+      Five: 4,
+      Six: 5,
+      Seven: 6,
+      Eight: 7,
+      Nine: 8,
+      Ten: 9,
+      Jack: 10,
+      Queen: 11,
+      King: 12,
+   };
+
+   const _reverseEnum = {};
+   for (const key in _enum) {
+      _reverseEnum[_enum[key]] = key;
+   }
+   return Object.freeze(Object.assign({}, _enum, _reverseEnum));
+})();
+
+let deckBottom = [];
 
 // Create arrays to store the cards in each center pile
-let centerPile1: Phaser.GameObjects.Container[] = [];
-let centerPile2: Phaser.GameObjects.Container[] = [];
-let centerPile3: Phaser.GameObjects.Container[] = [];
-let centerPile4: Phaser.GameObjects.Container[] = [];
+let centerPile1 = [];
+let centerPile2 = [];
+let centerPile3 = [];
+let centerPile4 = [];
 
 // Create arrays to store the cards in each center pile
-let endPile1: Phaser.GameObjects.Container[] = [];
-let endPile2: Phaser.GameObjects.Container[] = [];
-let endPile3: Phaser.GameObjects.Container[] = [];
-let endPile4: Phaser.GameObjects.Container[] = [];
+let endPile1 = [];
+let endPile2 = [];
+let endPile3 = [];
+let endPile4 = [];
 
 // Create arrays to store the piles
 const centerPiles = [centerPile1, centerPile2, centerPile3, centerPile4];
 const endPiles = [endPile1, endPile2, endPile3, endPile4];
-const drawPile: Phaser.GameObjects.Container[] = [];
+const drawPile = [];
 
 class PlaygroundScene extends Phaser.Scene {
-   private mousePositionText!: Phaser.GameObjects.Text;
    constructor() {
       super('playground');
-      this.mousePositionText = {} as Phaser.GameObjects.Text;
+      this.mousePositionText = null; // This is a Text object that will display the mouse position
    }
 
    preload() {
       this.load.spritesheet(
          'cardsSpades',
-         './assets/Top-Down/Cards/Spades-88x124.png',
+         './Top-Down/Cards/Spades-88x124.png',
          { frameWidth: 88, frameHeight: 124 }
       );
       this.load.spritesheet(
          'cardsClubs',
-         './assets/Top-Down/Cards/Clubs-88x124.png',
+         './Top-Down/Cards/Clubs-88x124.png',
          { frameWidth: 88, frameHeight: 124 }
       );
       this.load.spritesheet(
          'cardsDiamonds',
-         './assets/Top-Down/Cards/Diamonds-88x124.png',
+         './Top-Down/Cards/Diamonds-88x124.png',
          { frameWidth: 88, frameHeight: 124 }
       );
       this.load.spritesheet(
          'cardsHearts',
-         './assets/Top-Down/Cards/Hearts-88x124.png',
+         './Top-Down/Cards/Hearts-88x124.png',
          { frameWidth: 88, frameHeight: 124 }
       );
       this.load.spritesheet(
          'cardBacks',
-         './assets/Top-Down/Cards/Card_Back-88x124.png',
+         './Top-Down/Cards/Card_Back-88x124.png',
          { frameWidth: 88, frameHeight: 124 }
       );
       this.load.spritesheet(
          'cardsDecks',
-         './assets/Top-Down/Cards/Card_DeckA-88x140.png',
+         './Top-Down/Cards/Card_DeckA-88x140.png',
          { frameWidth: 88, frameHeight: 140 }
       );
    }
@@ -88,6 +128,7 @@ class PlaygroundScene extends Phaser.Scene {
       }
       for (let i = 0; i < centerPileX.length; i++) {
          deckBottom[i + 4] = this.add.sprite(centerPileX[i], centerPileY, 'deckBottomTexture');
+         console.log(deckBottom[i + 4]);
       }
       deckBottom[8] = this.add.sprite(230, centerPileY, 'deckBottomTexture');
 
@@ -132,7 +173,7 @@ class PlaygroundScene extends Phaser.Scene {
       
 
       // Functions happen on clicking a card here, also happens on clicking other objects
-      this.input.on('pointerdown', (_pointer: PointerEvent) => {
+      this.input.on('pointerdown', (_pointer) => {
          // Dupe code on variable declarations, probably could be cleaned up to be nicer
          // These nested ifs look like trash, should be cleaned up soon
          var mouseX = this.input.mousePointer.x;
@@ -154,8 +195,7 @@ class PlaygroundScene extends Phaser.Scene {
          }
       });
 
-      this.input.on('drag', (_pointer: PointerEvent, container: Phaser.GameObjects.Container, 
-                                dragX: number, dragY: number) => {
+      this.input.on('drag', (_pointer, container, dragX, dragY) => {
             container.setData({x: container.x, y: container.y});
             container.x = dragX;
             container.y = dragY;
@@ -166,7 +206,7 @@ class PlaygroundScene extends Phaser.Scene {
                   if (card.getAt(2).value <= container.getAt(2).value) {
                      card.x = container.x;
                      card.y = container.y + 20 * i;
-                     card.depth = container.depth + 1 * i;
+                     card.depth = container.depth + 1 * i; // Dont need the 1 but changing it might break things
                   }
                }
             }
@@ -174,7 +214,7 @@ class PlaygroundScene extends Phaser.Scene {
       );
       
       // These two are for moving the card back to its original position after dragging if a valid move isn't made
-      this.input.on('dragstart', (_pointer: PointerEvent, container: Phaser.GameObjects.Container) => {
+      this.input.on('dragstart', (_pointer, container) => {
          // Save the original position at the start of the drag
          container.setDepth(60);
          container.setData('originX', container.x);
@@ -183,7 +223,7 @@ class PlaygroundScene extends Phaser.Scene {
 
       // Gonna cut up a bunch of this logic later now that I understand how it works, the server
       //   will be doing a lot of the work here, or probably checking the work before allowing it to happen
-      this.input.on('dragend', (_pointer: PointerEvent, container: Phaser.GameObjects.Container) => {
+      this.input.on('dragend', (_pointer, container) => {
          for (let i = 0; i < centerPileX.length; i++) {
             if (container.x >= centerPileX[i] - 44 && container.x <= centerPileX[i] + 44 &&
                   container.y >= centerPileY + ((centerPiles[i].length - 1) * 20) - 62 && 
@@ -193,7 +233,7 @@ class PlaygroundScene extends Phaser.Scene {
                   // The card is within the bounds of the pile, so add it to the pile's array
                   //centerPiles[i].push(container);
                   // Remove the card from its original pile
-                  let originalPile = container.getData('pile') as Phaser.GameObjects.Container[];
+                  let originalPile = container.getData('pile');
                   let index = originalPile.indexOf(container);
                   if (index !== -1) {
                      let cardsToMove = originalPile.splice(index);
@@ -211,7 +251,7 @@ class PlaygroundScene extends Phaser.Scene {
                   for (let j = 0; j < endPiles[i].length; j++) {
                      if (this.canPlaceOnEndPile(container, endPiles[i], i)) {
                         // Remove the card from its original pile
-                        let originalPile = container.getData('pile') as Phaser.GameObjects.Container[];
+                        let originalPile = container.getData('pile');
                         let index = originalPile.indexOf(container);
                         if (index !== -1) {
                               originalPile.splice(index, 1);
@@ -255,6 +295,7 @@ class PlaygroundScene extends Phaser.Scene {
       // Draw the places cards can be placed
       for (let i = 0; i < centerPileX.length; i++) {
          deckBottom[i] = this.add.sprite(centerPileX[i], centerPileY - 180, 'cards' + suits[i], 0).setTint(0x408080);
+         console.log('cards' + suits[i]);
       }
       for (let i = 0; i < centerPileX.length; i++) {
          deckBottom[i + 4] = this.add.sprite(centerPileX[i], centerPileY, 'deckBottomTexture');
@@ -312,9 +353,9 @@ class PlaygroundScene extends Phaser.Scene {
       }
    }
 
-   canPlaceOnEndPile(container: Phaser.GameObjects.Container, pile: Phaser.GameObjects.Container[], pileIndex: number): boolean {
+   canPlaceOnEndPile(container, pile, pileIndex) {
       // Check if the suit of the card matches the suit of the pile
-      let card = container.getAt(2) as Card;
+      let card = container.getAt(2);
       if (card.suit !== pileIndex) {
           return false;
       }
@@ -325,13 +366,13 @@ class PlaygroundScene extends Phaser.Scene {
       } else {
           // If the pile is not empty, it can only accept a card with a value
           // that is one greater than the value of the top card in the pile
-          let topCard = pile[pile.length - 1].getAt(2) as Card;
+          let topCard = pile[pile.length - 1].getAt(2);
           return card.value === topCard.value + 1;
       }
    }
 
-   flipCard(container: Phaser.GameObjects.Container, faceUp: boolean) {
-      let card = container.getAt(2) as Card;
+   flipCard(container, faceUp) {
+      let card = container.getAt(2);
       // Initialized cards need to be flipped differently than cards that are already in the game
       if (card.faceDownObject.visible === card.faceUpObject.visible) {
          card.faceUp = !faceUp;
@@ -343,9 +384,9 @@ class PlaygroundScene extends Phaser.Scene {
       }
    }
 
-   canAddToCenterPile(cardToAdd: Phaser.GameObjects.Container, bottomCard: Phaser.GameObjects.Container): boolean {
+   canAddToCenterPile(cardToAdd, bottomCard) {
       // Check if the value of the card to add is one less than the value of the bottom card
-      let cardAdd = cardToAdd.getAt(2) as Card;
+      let cardAdd = cardToAdd.getAt(2);
       console.log(bottomCard);
       if (cardAdd.value === 12 && bottomCard === undefined) {
          return true;
@@ -353,7 +394,7 @@ class PlaygroundScene extends Phaser.Scene {
          return false;
       }
       
-      let cardBottom = bottomCard.getAt(2) as Card;
+      let cardBottom = bottomCard.getAt(2);
       console.log(cardBottom.value);
       if (cardAdd.value !== cardBottom.value - 1) {
          return false;
@@ -375,7 +416,7 @@ class PlaygroundScene extends Phaser.Scene {
 
 
 
-const config: Phaser.Types.Core.GameConfig = {
+const config = {
    type: Phaser.AUTO,
    scene: [PlaygroundScene],
    scale: {
