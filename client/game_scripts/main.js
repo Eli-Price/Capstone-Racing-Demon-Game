@@ -128,7 +128,6 @@ class PlaygroundScene extends Phaser.Scene {
       }
       for (let i = 0; i < centerPileX.length; i++) {
          deckBottom[i + 4] = this.add.sprite(centerPileX[i], centerPileY, 'deckBottomTexture');
-         console.log(deckBottom[i + 4]);
       }
       deckBottom[8] = this.add.sprite(230, centerPileY, 'deckBottomTexture');
 
@@ -200,23 +199,29 @@ class PlaygroundScene extends Phaser.Scene {
             container.x = dragX;
             container.y = dragY;
             let pile = container.getData('pile')
+            let containerIndex = pile.indexOf(container);
             if ( !(pile === drawPile)) {
                for (let i = 0; i < pile.length; i++) {
                   let card = pile[i];
                   if (card.getAt(2).value <= container.getAt(2).value) {
                      card.x = container.x;
-                     card.y = container.y + 20 * i;
-                     card.depth = container.depth + 1 * i; // Dont need the 1 but changing it might break things
+                     card.y = container.y + (20 * (i - containerIndex));
+                     card.depth = container.depth + i; // Dont need the 1 but changing it might break things
                   }
                }
             }
          }
       );
       
-      // These two are for moving the card back to its original position after dragging if a valid move isn't made
       this.input.on('dragstart', (_pointer, container) => {
          // Save the original position at the start of the drag
-         container.setDepth(60);
+         if (container.getData('pile') === drawPile) {
+            container.setDepth(60);
+         } else {
+            for (let i = 0; i < container.getData('pile').length; i++) {
+               container.getData('pile')[i].setDepth(60 + i);
+            }
+         }
          container.setData('originX', container.x);
          container.setData('originY', container.y);
      });
@@ -295,7 +300,6 @@ class PlaygroundScene extends Phaser.Scene {
       // Draw the places cards can be placed
       for (let i = 0; i < centerPileX.length; i++) {
          deckBottom[i] = this.add.sprite(centerPileX[i], centerPileY - 180, 'cards' + suits[i], 0).setTint(0x408080);
-         console.log('cards' + suits[i]);
       }
       for (let i = 0; i < centerPileX.length; i++) {
          deckBottom[i + 4] = this.add.sprite(centerPileX[i], centerPileY, 'deckBottomTexture');
