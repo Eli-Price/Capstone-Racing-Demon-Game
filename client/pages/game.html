@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+   <meta charset="UTF-8" />
+   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+   <title>Phaser 3 Solitaire Test</title>
+   <style>
+      html,
+      body,
+      #game {
+         height: 100%;
+         margin: 0;
+         padding: 0;
+      }
+   </style>
+</head>
+
+<body style="background-color: dimgray">
+   <div id="game"></div>
+   <!-- <script src="main.bundle.js"></script>   For webpack if I ever decide I actually needed it-->
+   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/phaser@v3.80.1/dist/phaser.min.js"></script>
+   <script src="../other_scripts/game.js" type="module"></script>
+   <script src="../game_scripts/main.js" type="module"></script>
+</body>
+
+</html>

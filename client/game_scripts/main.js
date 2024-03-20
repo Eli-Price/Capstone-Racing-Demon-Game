@@ -87,32 +87,32 @@ class PlaygroundScene extends Phaser.Scene {
    preload() {
       this.load.spritesheet(
          'cardsSpades',
-         './Top-Down/Cards/Spades-88x124.png',
+         '../assets/Top-Down/Cards/Spades-88x124.png',
          { frameWidth: 88, frameHeight: 124 }
       );
       this.load.spritesheet(
          'cardsClubs',
-         './Top-Down/Cards/Clubs-88x124.png',
+         '../assets/Top-Down/Cards/Clubs-88x124.png',
          { frameWidth: 88, frameHeight: 124 }
       );
       this.load.spritesheet(
          'cardsDiamonds',
-         './Top-Down/Cards/Diamonds-88x124.png',
+         '../assets/Top-Down/Cards/Diamonds-88x124.png',
          { frameWidth: 88, frameHeight: 124 }
       );
       this.load.spritesheet(
          'cardsHearts',
-         './Top-Down/Cards/Hearts-88x124.png',
+         '../assets/Top-Down/Cards/Hearts-88x124.png',
          { frameWidth: 88, frameHeight: 124 }
       );
       this.load.spritesheet(
          'cardBacks',
-         './Top-Down/Cards/Card_Back-88x124.png',
+         '../assets/Top-Down/Cards/Card_Back-88x124.png',
          { frameWidth: 88, frameHeight: 124 }
       );
       this.load.spritesheet(
          'cardsDecks',
-         './Top-Down/Cards/Card_DeckA-88x140.png',
+         '../assets/Top-Down/Cards/Card_DeckA-88x140.png',
          { frameWidth: 88, frameHeight: 140 }
       );
    }

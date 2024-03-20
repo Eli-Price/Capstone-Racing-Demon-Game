@@ -27,14 +27,30 @@ app.use(express.static(path.join(__dirname, '../client')));
 app.use(express.static(path.join(__dirname, '../dist')));
 app.use(express.static(path.join(__dirname, '../assets')));
 
+
 app.get('/', (req, res) => {
     res.sendFile(join(__dirname, '../client/pages/index.html'));
     console.log('connected and served index.html');
 });
 
 
+io.on('connection', (socket) => {
+    console.log('a user connected');
+    socket.on('disconnect', () => {
+        console.log('a user disconnected');
+    });
 
-const PORT = process.env.PORT || 3000;
+    socket.on('joinRoom', (roomId) => {
+        console.log('Joining room ' + roomId);
+        socket.join(roomId);
+    })
+});
+
+server.listen(3000, () => {
+    console.log('listening on localhost:3000');
+  });
+
+/*const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
-});
+});*/

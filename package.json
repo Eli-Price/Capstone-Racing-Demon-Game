@@ -21,6 +21,7 @@
       "webpack-cli": "^5.1.4"
    },
    "dependencies": {
+      "cookie.js": "^7.0.1",
       "express": "^4.18.3",
       "express.js": "^1.0.0",
       "node": "^21.7.1",
