@@ -77,11 +77,13 @@ let endPile4 = [];
 const centerPiles = [centerPile1, centerPile2, centerPile3, centerPile4];
 const endPiles = [endPile1, endPile2, endPile3, endPile4];
 const drawPile = [];
+const demonPile = [];
 
 class PlaygroundScene extends Phaser.Scene {
    constructor() {
       super('playground');
       this.mousePositionText = null; // This is a Text object that will display the mouse position
+
    }
 
    preload() {
@@ -131,33 +133,29 @@ class PlaygroundScene extends Phaser.Scene {
       }
       deckBottom[8] = this.add.sprite(230, centerPileY, 'deckBottomTexture');
 
-      // Add the deck sprite
-      this.add.sprite(100, 308, 'cardsDecks', 1);
-
       const deck = new Deck(this);
       deck.Shuffle();
 
       // Deal 1 card to each pile and remove them from the deck
-      centerPile1.push(deck.cards[51]);
+      centerPile1.push(deck.cards[deck.cards.length - 1]);
       deck.cards.pop();
       centerPile1[0].getAt(0).setVisible(true);
 
-      //this.flipCard(centerPile1[0], centerPile1[0].getAt(2).faceUp);
-      centerPile2.push(deck.cards[50]);
+      centerPile2.push(deck.cards[deck.cards.length - 1]);
       deck.cards.pop();
       centerPile2[0].getAt(0).setVisible(true);
 
-      //this.flipCard(centerPile2[0], centerPile2[0].getAt(2).faceUp);55
-      centerPile3.push(deck.cards[49]);
+      centerPile3.push(deck.cards[deck.cards.length - 1]);
       deck.cards.pop();
       centerPile3[0].getAt(0).setVisible(true);
 
-      //this.flipCard(centerPile3[0], centerPile3[0].getAt(2).faceUp);
-      centerPile4.push(deck.cards[48]);
+      centerPile4.push(deck.cards[deck.cards.length - 1]);
       deck.cards.pop();
       centerPile4[0].getAt(0).setVisible(true);
-
-      //this.flipCard(centerPile4[0], centerPile4[0].getAt(2).faceUp);
+      for (let i = 0; i < 13; i++) {
+         demonPile.push(deck.cards[deck.cards.length - 1]);
+         deck.cards.pop();
+      }
 
       let fakeContainer = this.add.container(0, 0);
       fakeContainer.setInteractive(new Phaser.Geom.Rectangle(-44, -62, 88, 124), Phaser.Geom.Rectangle.Contains);
@@ -178,7 +176,7 @@ class PlaygroundScene extends Phaser.Scene {
          var mouseX = this.input.mousePointer.x;
          var mouseY = this.input.mousePointer.y;
          //console.log("Mouse Pos: " + mouseX, mouseY);
-         if (mouseX >= 56 && mouseX <= 144 && mouseY >= 238 && mouseY <= 362) {
+         if (mouseX >= 56 && mouseX <= 144 && mouseY >= 56 && mouseY <= 176) {
             let drawn = deck.drawCard();
             if (drawn !== undefined) {
                drawPile.push(drawn);
@@ -200,7 +198,7 @@ class PlaygroundScene extends Phaser.Scene {
             container.y = dragY;
             let pile = container.getData('pile')
             let containerIndex = pile.indexOf(container);
-            if ( !(pile === drawPile)) {
+            if ( !(pile === drawPile || pile === demonPile)) {
                for (let i = 0; i < pile.length; i++) {
                   let card = pile[i];
                   if (card.getAt(2).value <= container.getAt(2).value) {
@@ -282,6 +280,8 @@ class PlaygroundScene extends Phaser.Scene {
       mouseX = mouseX | 0;
       mouseY = mouseY | 0;
       this.mousePositionText.setText(`Mouse Position: (${mouseX}, ${mouseY})`);
+      this.demonPileCount.setText(`${demonPile.length}`);
+      //this.deckCount.setText(`${deck.cards.length}`);
 
       if (false) {
          //this.renderCards();
@@ -296,6 +296,8 @@ class PlaygroundScene extends Phaser.Scene {
       // Clear the current cards
       this.children.removeAll();
       this.mousePositionText = this.add.text(10, 10, '', { color: '#ffffff' });
+      this.demonPileCount = this.add.text(221, 216, '', { color: '#ffffff' });
+      //this.deckCount = this.add.text(95, 38, '', { color: '#ffffff' });
 
       // Draw the places cards can be placed
       for (let i = 0; i < centerPileX.length; i++) {
@@ -305,11 +307,13 @@ class PlaygroundScene extends Phaser.Scene {
          deckBottom[i + 4] = this.add.sprite(centerPileX[i], centerPileY, 'deckBottomTexture');
          deckBottom[i + 4].setDepth(0);
       }
+      deckBottom[8] = this.add.sprite(230, endPileY, 'deckBottomTexture');
+      deckBottom[8] = this.add.sprite(100, endPileY, 'deckBottomTexture');
       deckBottom[8] = this.add.sprite(230, centerPileY, 'deckBottomTexture');
-      deckBottom[8] = this.add.sprite(100, centerPileY, 'deckBottomTexture');
+      
 
       // Add the deck sprite
-      let deckSprite = this.add.sprite(100, 308, 'cardsDecks', 1);
+      let deckSprite = this.add.sprite(100, 128, 'cardsDecks', 1);
       deckSprite.setInteractive();
       
       // Draw each card at its appropriate position for centerPiles
@@ -346,7 +350,7 @@ class PlaygroundScene extends Phaser.Scene {
          card.setInteractive(new Phaser.Geom.Rectangle(-44, -62, 88, 124), Phaser.Geom.Rectangle.Contains);
          this.input.setDraggable(card);
          card.x = 230;
-         card.y = centerPileY;
+         card.y = endPileY;
          //console.log(card.x, card.y);
          // Set faceup sprite to visible
          card.getAt(0).setVisible(true);
@@ -354,6 +358,26 @@ class PlaygroundScene extends Phaser.Scene {
          card.setDepth(i + 5);
          // Store a reference to the pile in the card
          card.setData('pile', drawPile);
+      }
+      // Draw each card at its appropriate position for demonPile
+      for (let i = 0; i < demonPile.length; i++) {
+         let card = this.add.existing(demonPile[i]);
+         card.setInteractive(new Phaser.Geom.Rectangle(-44, -62, 88, 124), Phaser.Geom.Rectangle.Contains);
+         this.input.setDraggable(card);
+         card.x = 230;
+         card.y = centerPileY;
+         //console.log(card.x, card.y);
+         // Set faceup sprite to visible
+         card.getAt(0).setVisible(true);
+         //this.flipCard(card, card.getAt(2).faceUp);
+         card.setDepth(i + 5);
+         // Store a reference to the pile in the card
+         card.setData('pile', demonPile);
+      }
+
+      // Need to make gamescene for the other players, or do this on containers of gameobjects
+      if (true) {
+         this.cameras.main.rotation += 4 * 3.1415926/2;
       }
    }
 
