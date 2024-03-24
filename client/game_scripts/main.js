@@ -351,7 +351,6 @@ class PlaygroundScene extends Phaser.Scene {
          this.input.setDraggable(card);
          card.x = 230;
          card.y = endPileY;
-         //console.log(card.x, card.y);
          // Set faceup sprite to visible
          card.getAt(0).setVisible(true);
          //this.flipCard(card, card.getAt(2).faceUp);
@@ -366,7 +365,6 @@ class PlaygroundScene extends Phaser.Scene {
          this.input.setDraggable(card);
          card.x = 230;
          card.y = centerPileY;
-         //console.log(card.x, card.y);
          // Set faceup sprite to visible
          card.getAt(0).setVisible(true);
          //this.flipCard(card, card.getAt(2).faceUp);
