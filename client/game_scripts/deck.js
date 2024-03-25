@@ -43,15 +43,15 @@ export class Deck {
       // Deal 1 card to each pile and remove them from the deck
       for (let i = 0; i < 4; i++) {
          centerPiles[i].push(this.cards[this.cards.length - 1]);
-         console.log(centerPiles[i]);
-         this.cards.pop();
+         //console.log(centerPiles[i]);
+         //this.cards.pop();
          //centerPiles[i][0].getAt(0).setVisible(true);
       }
 
       // Deal 13 cards to the demon pile and remove them from the deck
       for (let i = 0; i < 13; i++) {
          demonPile.push(this.cards[this.cards.length - 1]);
-         this.cards.pop();
+         //this.cards.pop();
       }
 
       // Moved back to main.js, probably needs to be figured out differently
@@ -65,7 +65,7 @@ export class Deck {
 
       this.cards.forEach(card => {
          deckPile.push(card);
-         this.cards.pop();
+         //this.cards.pop();
       });
    };
 

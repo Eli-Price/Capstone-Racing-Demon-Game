@@ -60,8 +60,7 @@ io.on('connection', (socket) => {
 
     socket.on('joinRoom', (roomId) => {
         console.log('Joining room ' + roomId);
-        socket.join(roomId);
-        res.sendFile(join(__dirname, '../client/pages/game.html'));
+        //socket.join(roomId);
     })
 
     socket.on('sendPiles', (data) => {
@@ -71,12 +70,12 @@ io.on('connection', (socket) => {
     });
 });
 
-/*
+
 server.listen(3000, () => {
     console.log('listening on localhost:3000');
   });
-*/
-const PORT = process.env.PORT || 3000;
+
+/*const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
-});
+});*/

@@ -1,5 +1,4 @@
 //import Phaser, { GameObjects, Textures } from './phaser';
-import { exists } from 'fs';
 import Card from './card.js';
 import { Deck } from './deck.js';
 import { createDeckBottom, drawDeckBottom } from './deck_bottom.js';
@@ -257,24 +256,23 @@ class PlaygroundScene extends Phaser.Scene {
 
          for (let i = 0; i < demonPile.length; i++) {
          
-            pileData[i].name = demonPile[i].getAt(2).name,
-            pileData[i].suit = demonPile[i].getAt(2).suit,
-            pileData[i].value = demonPile[i].getAt(2).value
+            pileData.name = demonPile[i].getAt(2).name,
+            pileData.suit = demonPile[i].getAt(2).suit,
+            pileData.value = demonPile[i].getAt(2).value
             //pileData.pile = demonPile[0].getData('pile')
 
-            serializedData[i] = JSON.stringify(pileData);
+            serializedData[i] = pileData;
+            
          };
          
          // Serialize the data with JSON.stringify
-         //let serializedData = JSON.stringify(pileData)
-         console.log(serializedData);
+         console.log(serializedData);  //Does it send the same data it recieves?
          socket.emit('sendPiles', serializedData);
 
          socket.on('recievePiles', (serializedData) => {
-            // This is the start of functionality
-            console.log(serializedData);
-            let data = JSON.parse(serializedData);
-            console.log(data);
+            // This is the starting to reach functionality
+            //console.log(serializedData);  Does it recieve the same data that was sent?
+            //let data = JSON.parse(serializedData);
 
             /*for (let i = 0; i < centerPiles.length; i++) {
                for (let j = 0; j < centerPiles[i].length; j++) {

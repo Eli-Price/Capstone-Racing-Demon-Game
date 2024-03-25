@@ -4,24 +4,17 @@
    "version": "0.0.0",
    "type": "module",
    "scripts": {
-      "dev": "vite",
-      "build": "webpack",
+      "dev": "nodemon server/main.ts",
+      "build": "npm install",
       "devStart": "nodemon server/server.js",
       "cStart": "nodemon server/main.ts"
    },
    "devDependencies": {
-      "@typescript-eslint/eslint-plugin": "^5.56.0",
-      "@typescript-eslint/parser": "^5.56.0",
       "eslint": "^8.36.0",
       "eslint-config-prettier": "^8.7.0",
-      "prettier": "^2.8.5",
-      "typescript": "^5.0.2",
-      "vite": "^4.2.1",
-      "webpack": "^5.90.3",
-      "webpack-cli": "^5.1.4"
+      "prettier": "^2.8.5"
    },
    "dependencies": {
-      "cookie.js": "^7.0.1",
       "express": "^4.18.3",
       "express.js": "^1.0.0",
       "node": "^21.7.1",
