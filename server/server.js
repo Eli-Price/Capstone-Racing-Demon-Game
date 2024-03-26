@@ -63,10 +63,10 @@ io.on('connection', (socket) => {
         //socket.join(roomId);
     })
 
-    socket.on('sendPiles', (data) => {
+    socket.on('sendPiles', ({centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData}) => {
         console.log('Updating piles');
-        console.log(data);
-        socket.emit('recievePiles', data);
+        console.log(endPilesData);
+        socket.emit('recievePiles', {centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData});
     });
 });
 

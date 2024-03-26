@@ -58,9 +58,9 @@ export class Deck {
       fakeContainer.setInteractive(new Phaser.Geom.Rectangle(-44, -62, 88, 124), Phaser.Geom.Rectangle.Contains);
 
       // Add the fake container to each end pile
-      for (let i = 0; i < endPiles.length; i++) {
+      /*for (let i = 0; i < endPiles.length; i++) {
          endPiles[i].push(fakeContainer);
-      }
+      }*/
 
    };
 
