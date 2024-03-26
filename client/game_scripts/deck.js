@@ -39,22 +39,21 @@ export class Deck {
    // Deals cards in a setup for racing demon
    Deal = (centerPiles, endPiles, demonPile, deckPile) => {
       this.Shuffle(); // Shuffle the cards
+
+      this.cards.forEach(card => deckPile.push(card));
       
       // Deal 1 card to each pile and remove them from the deck
       for (let i = 0; i < 4; i++) {
-         centerPiles[i].push(this.cards[this.cards.length - 1]);
-         //console.log(centerPiles[i]);
-         //this.cards.pop();
-         //centerPiles[i][0].getAt(0).setVisible(true);
+         centerPiles[i].push(this.cards[deckPile.length - 1]);
+         deckPile.pop();
       }
 
       // Deal 13 cards to the demon pile and remove them from the deck
       for (let i = 0; i < 13; i++) {
-         demonPile.push(this.cards[this.cards.length - 1]);
-         //this.cards.pop();
+         demonPile.push(this.cards[deckPile.length - 1]);
+         deckPile.pop();
       }
 
-      // Moved back to main.js, probably needs to be figured out differently
       let fakeContainer = this.scene.add.container(0, 0);
       fakeContainer.setInteractive(new Phaser.Geom.Rectangle(-44, -62, 88, 124), Phaser.Geom.Rectangle.Contains);
 
@@ -63,14 +62,10 @@ export class Deck {
          endPiles[i].push(fakeContainer);
       }
 
-      this.cards.forEach(card => {
-         deckPile.push(card);
-         //this.cards.pop();
-      });
    };
 
-   drawCard() {
+   drawCard(deckPile) {
       //let card = this.cards.pop();
-      return this.cards.pop();
+      return deckPile.pop();
    }
 }

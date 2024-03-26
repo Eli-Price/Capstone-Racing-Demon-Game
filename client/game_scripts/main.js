@@ -141,7 +141,7 @@ class PlaygroundScene extends Phaser.Scene {
 
       const deck = new Deck(this);
       deck.Deal(centerPiles, endPiles, demonPile, deckPile);
-      
+
       this.renderCards();
 
 
@@ -154,7 +154,7 @@ class PlaygroundScene extends Phaser.Scene {
          var mouseY = this.input.mousePointer.y;
          //console.log("Mouse Pos: " + mouseX, mouseY);
          if (mouseX >= 56 && mouseX <= 144 && mouseY >= 56 && mouseY <= 176) {
-            let drawn = deck.drawCard();  // This needs to get changed later
+            let drawn = deck.drawCard(deckPile);
             if (drawn !== undefined) {
                drawPile.push(drawn);
                deckBottom[8].setVisible(false);
@@ -246,33 +246,48 @@ class PlaygroundScene extends Phaser.Scene {
             }
          }
 
-         let pileData = {
-            name : '',
-            suit : 0,
-            value : 0,
-            //pile: demonPile[0].getData('pile')
-         };
-         let serializedData = [];
+         let centerPilesData = [];
+         let endPilesData = [];
+         let drawPileData = [];
+         let demonPileData = [];
+         let deckPileData = [];
 
          for (let i = 0; i < demonPile.length; i++) {
-         
-            pileData.name = demonPile[i].getAt(2).name,
-            pileData.suit = demonPile[i].getAt(2).suit,
-            pileData.value = demonPile[i].getAt(2).value
+            let pileData = {
+               name : '',
+               suit : 0,
+               value : 0,
+               //pile: demonPile[0].getData('pile')
+            };
+
+            pileData.name = demonPile[i].getAt(2).name;
+            pileData.suit = demonPile[i].getAt(2).suit;
+            pileData.value = demonPile[i].getAt(2).value;
             //pileData.pile = demonPile[0].getData('pile')
 
-            serializedData[i] = pileData;
+            demonPileData[i] = pileData;
             
          };
          
          // Serialize the data with JSON.stringify
-         console.log(serializedData);  //Does it send the same data it recieves?
-         socket.emit('sendPiles', serializedData);
+         //let superSerial = JSON.stringify(serializedData);
+         //console.log(serializedData);  //Does it send the same data it recieves?
+         socket.emit('sendPiles', demonPileData);
 
-         socket.on('recievePiles', (serializedData) => {
+         socket.on('recievePiles', (demonPileData) => {
             // This is the starting to reach functionality
-            //console.log(serializedData);  Does it recieve the same data that was sent?
+            console.log(demonPileData);  //Does it recieve the same data that was sent?
             //let data = JSON.parse(serializedData);
+            //console.log(deck.cards[0].getAt(2).name);
+            console.log(demonPileData[0].name);
+
+            
+
+            /*for (let card of deck.cards) {
+               if (card.getAt(2).name === serializedData[0].name) {
+                  demonPile.push(card);
+               }
+            };*/
 
             /*for (let i = 0; i < centerPiles.length; i++) {
                for (let j = 0; j < centerPiles[i].length; j++) {
@@ -282,9 +297,13 @@ class PlaygroundScene extends Phaser.Scene {
             // Clear the existing arrays
             /*centerPiles.length = 0;
             endPiles.length = 0;
-            drawPile.length = 0;*/
+            //Pile.length = 0;*/
             demonPile.length = 0;
             //deckPile.length = 0;
+            for (let i = 0; i < demonPileData.length; i++) {
+               demonPile.push(deck.cards.find(card => card.getAt(2).name === demonPileData[i].name));
+               //demonPile.push(temp);
+            }
 
             // Push the new data into the existing arrays
             /*Array.prototype.push.apply(centerPiles, newCenterPiles);
