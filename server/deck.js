@@ -1,29 +1,19 @@
-//import Phaser from 'phaser';
-import Card from './card.js';
+// Deck class for server side
+
 
 export class Deck {
    cards = [];
 
-   constructor(scene) {
-      this.scene = scene;
+   constructor(playerID) {
       const suits = ['Hearts', 'Diamonds', 'Clubs', 'Spades'];
       for (let suit = 0; suit < suits.length; suit++) {
          for (let value = 0; value < 13; value++) {
-            let card = new Card(
-               scene,
-               suits[suit] + value,
-               suit,
-               value,
-               true,
-               new Phaser.GameObjects.Sprite(scene, 0, 0, 'cards' + suits[suit], value),
-               new Phaser.GameObjects.Sprite(scene, 0, 0, 'cardBacks', 0),
-               scene.add.container(0, 0)
-            );
-            card.faceUpObject.setVisible(false);
-            card.faceDownObject.setVisible(false);
-            card.container.add([card.faceUpObject, card.faceDownObject, card]);
-            card.container.getAt(2).setVisible(false); // It works, TypeScript is just being a pain
-            this.cards.push(card.container);
+            let cardObject = {name : '', suit : 0, value : 0};
+            cardObject.name = suits[suit] + value,
+            cardObject.suit = suit,
+            cardObject.value = value
+
+            this.cards.push(cardObject);
          }
       }
    }

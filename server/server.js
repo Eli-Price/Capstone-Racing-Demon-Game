@@ -6,8 +6,9 @@ import { dirname, join } from 'node:path';
 import { Server } from 'socket.io';
 //import sqlite3 from 'sqlite3';
 //import { open } from 'sqlite';
+import { Deck } from './deck.js';
 
-//console.log('Hi! I am a server')
+
 
 const app = express();
 const server = createServer(app);
@@ -31,11 +32,16 @@ let endPile3 = [];
 let endPile4 = [];
 
 // Create arrays to store the piles
-let centerPiles = [centerPile1, centerPile2, centerPile3, centerPile4];
-let endPiles = [endPile1, endPile2, endPile3, endPile4];
-let drawPile = [];
-let demonPile = [];
-let deckPile = [];
+const centerPiles = [centerPile1, centerPile2, centerPile3, centerPile4];
+const endPiles = [endPile1, endPile2, endPile3, endPile4];
+const drawPile = [];
+const demonPile = [];
+const deckPile = [];
+
+let deck = new Deck(1);
+deck.Deal(centerPiles, endPiles, demonPile, deckPile);
+
+console.log(centerPiles);
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 console.log(__dirname);
@@ -62,6 +68,12 @@ io.on('connection', (socket) => {
         console.log('Joining room ' + roomId);
         //socket.join(roomId);
     })
+
+    socket.on('dealCards', () => {
+        console.log(centerPiles)
+        console.log('Dealing cards');
+        socket.emit('recievePiles', centerPiles, endPiles, drawPile, demonPile, deckPile);
+    });
 
     socket.on('sendPiles', ({centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData}) => {
         console.log('Updating piles');

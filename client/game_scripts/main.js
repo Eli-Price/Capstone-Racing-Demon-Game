@@ -10,8 +10,8 @@ import { Server } from 'socket.io';*/
 
 const socket = io();
 
-const roomId = localStorage.getItem('roomId');
-socket.emit('joinRoom', roomId);
+/*const roomId = localStorage.getItem('roomId');
+socket.emit('joinRoom', roomId);*/
 
 // Positions of the centerPiles
 const centerPileX = [420, 540, 660, 780];
@@ -89,7 +89,6 @@ class PlaygroundScene extends Phaser.Scene {
    constructor() {
       super('playground');
       this.mousePositionText = null;
-      //this.deck = new Deck(this);
    }
 
    preload() {
@@ -140,10 +139,7 @@ class PlaygroundScene extends Phaser.Scene {
       deckBottom[8] = this.add.sprite(230, centerPileY, 'deckBottomTexture');
 
       const deck = new Deck(this);
-      deck.Deal(centerPiles, endPiles, demonPile, deckPile);
-
       this.renderCards();
-
 
 
       // Functions happen on clicking on deck, should be converted to an event listener
@@ -259,7 +255,7 @@ class PlaygroundScene extends Phaser.Scene {
          
       });
 
-
+      this.updatePiles(deck);
    }
 
    update() {
@@ -505,11 +501,11 @@ class PlaygroundScene extends Phaser.Scene {
 
       
       
-      // Serialize the data with JSON.stringify
-      //console.log(serializedData);  //Does it send the same data it recieves?
-      socket.emit('sendPiles', {centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData});
 
-      socket.on('recievePiles', ({centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData}) => {
+      //socket.emit('sendPiles', {centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData});
+      socket.emit('dealCards');
+
+      socket.on('recievePiles', (centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData) => {
          // This is starting to reach functionality
 
          //console.log(centerPilesData[0][0].name);
@@ -530,7 +526,7 @@ class PlaygroundScene extends Phaser.Scene {
          demonPile.length = 0;
          deckPile.length = 0;
 
-         console.log(centerPiles[0]);
+         console.log(endPilesData);
 
          for (let i = 0; i < centerPilesData.length; i++) {
             for (let j = 0; j < centerPilesData[i].length; j++) {
@@ -553,7 +549,7 @@ class PlaygroundScene extends Phaser.Scene {
          }
 
          console.log('updating');
-         //this.renderCards();
+         this.renderCards();
       });
    }
 
