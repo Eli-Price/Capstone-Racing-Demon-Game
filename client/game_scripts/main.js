@@ -19,6 +19,8 @@ const centerPileY = 300;
 const endPileX = [420, 540, 660, 780];
 const endPileY = 120;
 
+let gameTimer = 0;
+
 //let suits = card_config.Suits;
 //let values = card_config.Values;
 
@@ -89,6 +91,7 @@ class PlaygroundScene extends Phaser.Scene {
    constructor() {
       super('playground');
       this.mousePositionText = null;
+      this.deck = null;
    }
 
    preload() {
@@ -138,7 +141,17 @@ class PlaygroundScene extends Phaser.Scene {
       }
       deckBottom[8] = this.add.sprite(230, centerPileY, 'deckBottomTexture');
 
-      const deck = new Deck(this);
+      this.deck = new Deck(this);
+      
+      socket.on('recievePiles', (centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData) => {
+         console.log("Test1")
+         console.log(centerPilesData)
+         
+         this.updatePiles(this.deck, centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData);
+      });
+
+      socket.emit('dealCards'/*, (playerId) => {}*/);
+      
       this.renderCards();
 
 
@@ -150,7 +163,7 @@ class PlaygroundScene extends Phaser.Scene {
          var mouseY = this.input.mousePointer.y;
          //console.log("Mouse Pos: " + mouseX, mouseY);
          if (mouseX >= 56 && mouseX <= 144 && mouseY >= 56 && mouseY <= 176) {
-            let drawn = deck.drawCard(deckPile);
+            let drawn = this.deck.drawCard(deckPile);
             if (drawn !== undefined) {
                drawPile.push(drawn);
                deckBottom[8].setVisible(false);
@@ -161,7 +174,8 @@ class PlaygroundScene extends Phaser.Scene {
                   deckPile[i] = card;  // This error doesn't break anything, an undefined cannot reach this point
                }
             }
-         this.renderCards();
+            this.sendPiles();
+            this.renderCards();
          }
       });
 
@@ -249,13 +263,11 @@ class PlaygroundScene extends Phaser.Scene {
                }
             }
          }
-         this.updatePiles(deck);
+         this.sendPiles();
+         //this.updatePiles(this.deck);
 
          this.renderCards();
-         
       });
-
-      this.updatePiles(deck);
    }
 
    update() {
@@ -265,14 +277,22 @@ class PlaygroundScene extends Phaser.Scene {
       mouseY = mouseY | 0;
       this.mousePositionText.setText(`Mouse Position: (${mouseX}, ${mouseY})`);
       this.demonPileCount.setText(`${demonPile.length}`);
-      //this.deckCount.setText(`${deck.cards.length}`);
 
+
+      gameTimer++;
+      if ((gameTimer % 180 && gameTimer > 360) === 0) {
+         //console.log("count" + gameTimer)
+         this.sendPiles();
+         this.updatePiles(this.deck);
+      }
    }
 
    // This is more like what I will want to do, the server should be checking if a card goes on a stack,
    //   and then sending back the new state of the game
    // Only check the player's board on drag end, otherwise it doesn't need to be updated.
    // Perhaps call this on an if() which works when the server sends back a new state of the game
+   // Or its just a socket.on for when the board state updates, but then ther probably needs to be more than one
+   //    function to update the board unless I want to waste a ton of effort
    renderCards() {
       // Clear the current cards
       this.children.removeAll();
@@ -288,7 +308,7 @@ class PlaygroundScene extends Phaser.Scene {
          deckBottom[i + 4] = this.add.sprite(centerPileX[i], centerPileY, 'deckBottomTexture');
          deckBottom[i + 4].setDepth(0);
       }
-      /*if (deck.length > 0) {
+      /*if (this.deck.length > 0) {
          
       }*/
       deckBottom[8] = this.add.sprite(100, endPileY, 'deckBottomTexture');
@@ -429,7 +449,8 @@ class PlaygroundScene extends Phaser.Scene {
       return true;
   }
 
-   updatePiles(deck) {
+   // Sends the users gamestate to the server
+   sendPiles() {
       let centerPilesData = [[],[],[],[]];
       let endPilesData = [[],[],[],[]];
       let drawPileData = [];
@@ -499,58 +520,54 @@ class PlaygroundScene extends Phaser.Scene {
          deckPileData[i] = pileData;
       };
 
+      socket.volatile.emit('sendPiles', centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData);
+      console.log("Test2")
+   }
+
+   // Recieves the gamestate sent from the server and updates the client
+   updatePiles(deck, centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData) {
       
-      
+      // This is starting to reach functionality
 
-      //socket.emit('sendPiles', {centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData});
-      socket.emit('dealCards');
+      // Clear the existing arrays
+      centerPile1.length = 0;
+      centerPile2.length = 0;
+      centerPile3.length = 0;
+      centerPile4.length = 0;
 
-      socket.on('recievePiles', (centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData) => {
-         // This is starting to reach functionality
+      endPile1.length = 0;
+      endPile2.length = 0;
+      endPile3.length = 0;
+      endPile4.length = 0;
 
-         //console.log(centerPilesData[0][0].name);
-         //console.log(demonPileData[0].name);
+      drawPile.length = 0;
+      demonPile.length = 0;
+      deckPile.length = 0;
 
-         // Clear the existing arrays
-         centerPile1.length = 0;
-         centerPile2.length = 0;
-         centerPile3.length = 0;
-         centerPile4.length = 0;
+      console.log(centerPilesData);
 
-         endPile1.length = 0;
-         endPile2.length = 0;
-         endPile3.length = 0;
-         endPile4.length = 0;
-
-         drawPile.length = 0;
-         demonPile.length = 0;
-         deckPile.length = 0;
-
-         console.log(endPilesData);
-
-         for (let i = 0; i < centerPilesData.length; i++) {
-            for (let j = 0; j < centerPilesData[i].length; j++) {
-               centerPiles[i].push(deck.cards.find(card => card.getAt(2).name === centerPilesData[i][j].name));
-            }
+      for (let i = 0; i < centerPilesData.length; i++) {
+         for (let j = 0; j < centerPilesData[i].length; j++) {
+            centerPiles[i].push(deck.cards.find(card => card.getAt(2).name === centerPilesData[i][j].name));
          }
-         for (let i = 0; i < endPilesData.length; i++) {
-            for (let j = 0; j < endPilesData[i].length; j++) {
-               endPiles[i].push(deck.cards.find(card => card.getAt(2).name === endPilesData[i][j].name));
-            }
+      }
+      for (let i = 0; i < endPilesData.length; i++) {
+         for (let j = 0; j < endPilesData[i].length; j++) {
+            endPiles[i].push(deck.cards.find(card => card.getAt(2).name === endPilesData[i][j].name));
          }
-         for (let i = 0; i < drawPileData.length; i++) {
-            drawPile.push(deck.cards.find(card => card.getAt(2).name === drawPileData[i].name));
-         }
-         for (let i = 0; i < demonPileData.length; i++) {
-            demonPile.push(deck.cards.find(card => card.getAt(2).name === demonPileData[i].name));
-         }
-         for (let i = 0; i < deckPileData.length; i++) {
-            deckPile.push(deck.cards.find(card => card.getAt(2).name === deckPileData[i].name));
-         }
+      }
+      for (let i = 0; i < drawPileData.length; i++) {
+         drawPile.push(deck.cards.find(card => card.getAt(2).name === drawPileData[i].name));
+      }
+      for (let i = 0; i < demonPileData.length; i++) {
+         demonPile.push(deck.cards.find(card => card.getAt(2).name === demonPileData[i].name));
+      }
+      for (let i = 0; i < deckPileData.length; i++) {
+         deckPile.push(deck.cards.find(card => card.getAt(2).name === deckPileData[i].name));
+      }
 
-         console.log('updating');
-         this.renderCards();
-      });
+      console.log('updating');
+      this.renderCards();
    }
 
 

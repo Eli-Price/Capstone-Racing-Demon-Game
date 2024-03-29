@@ -69,18 +69,67 @@ io.on('connection', (socket) => {
         //socket.join(roomId);
     })
 
-    socket.on('dealCards', () => {
+    socket.once('dealCards', () => {
         console.log(centerPiles)
         console.log('Dealing cards');
         socket.emit('recievePiles', centerPiles, endPiles, drawPile, demonPile, deckPile);
     });
 
-    socket.on('sendPiles', ({centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData}) => {
+    socket.on('sendPiles', (centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData) => {
         console.log('Updating piles');
+        console.log(centerPilesData);
         console.log(endPilesData);
-        socket.emit('recievePiles', {centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData});
+
+        // This is starting to reach functionality
+
+        //console.log(centerPilesData[0][0].name);
+        //console.log(demonPileData[0].name);
+
+        // Clear the existing arrays
+        centerPile1.length = 0;
+        centerPile2.length = 0;
+        centerPile3.length = 0;
+        centerPile4.length = 0;
+
+        endPile1.length = 0;
+        endPile2.length = 0;
+        endPile3.length = 0;
+        endPile4.length = 0;
+
+        drawPile.length = 0;
+        demonPile.length = 0;
+        deckPile.length = 0;
+
+        //console.log(endPilesData);
+
+        for (let i = 0; i < centerPilesData.length; i++) {
+        for (let j = 0; j < centerPilesData[i].length; j++) {
+            centerPiles[i].push(deck.cards.find(card => card.name === centerPilesData[i][j].name));
+        }
+        }
+        for (let i = 0; i < endPilesData.length; i++) {
+        for (let j = 0; j < endPilesData[i].length; j++) {
+            endPiles[i].push(deck.cards.find(card => card.name === endPilesData[i][j].name));
+        }
+        }
+        for (let i = 0; i < drawPileData.length; i++) {
+        drawPile.push(deck.cards.find(card => card.name === drawPileData[i].name));
+        }
+        for (let i = 0; i < demonPileData.length; i++) {
+        demonPile.push(deck.cards.find(card => card.name === demonPileData[i].name));
+        }
+        for (let i = 0; i < deckPileData.length; i++) {
+        deckPile.push(deck.cards.find(card => card.name === deckPileData[i].name));
+        }
+
+        console.log('updating');
+        console.log(centerPiles)
+
+        socket.emit('recievePiles', centerPiles, endPiles, drawPile, demonPile, deckPile);
     });
 });
+
+
 
 
 server.listen(3000, () => {
@@ -91,3 +140,49 @@ server.listen(3000, () => {
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });*/
+
+function updateCards(deck, centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData) {
+    // This is starting to reach functionality
+
+    //console.log(centerPilesData[0][0].name);
+    //console.log(demonPileData[0].name);
+
+    // Clear the existing arrays
+    centerPile1.length = 0;
+    centerPile2.length = 0;
+    centerPile3.length = 0;
+    centerPile4.length = 0;
+
+    endPile1.length = 0;
+    endPile2.length = 0;
+    endPile3.length = 0;
+    endPile4.length = 0;
+
+    drawPile.length = 0;
+    demonPile.length = 0;
+    deckPile.length = 0;
+
+    //console.log(endPilesData);
+
+    for (let i = 0; i < centerPilesData.length; i++) {
+       for (let j = 0; j < centerPilesData[i].length; j++) {
+          centerPiles[i].push(deck.cards.find(card => card.name === centerPilesData[i][j].name));
+       }
+    }
+    for (let i = 0; i < endPilesData.length; i++) {
+       for (let j = 0; j < endPilesData[i].length; j++) {
+          endPiles[i].push(deck.cards.find(card => card.name === endPilesData[i][j].name));
+       }
+    }
+    for (let i = 0; i < drawPileData.length; i++) {
+       drawPile.push(deck.cards.find(card => card.name === drawPileData[i].name));
+    }
+    for (let i = 0; i < demonPileData.length; i++) {
+       demonPile.push(deck.cards.find(card => card.name === demonPileData[i].name));
+    }
+    for (let i = 0; i < deckPileData.length; i++) {
+       deckPile.push(deck.cards.find(card => card.name === deckPileData[i].name));
+    }
+
+    console.log('updating');
+}
