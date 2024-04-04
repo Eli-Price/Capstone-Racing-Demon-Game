@@ -1,70 +1,47 @@
 //import Phaser, { GameObjects, Textures } from './phaser';
 import Card from './card.js';
+//import crypto from 'crypto';
+import { suits, values} from './card_config.js';
 import { Deck } from './deck.js';
-import { createDeckBottom, drawDeckBottom } from './deck_bottom.js';
+import { createDeckBottom } from './deck_bottom.js';
 /*import express from 'express';
 import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { Server } from 'socket.io';*/
 
-const socket = io();
 
-/*const roomId = localStorage.getItem('roomId');
-socket.emit('joinRoom', roomId);*/
+const roomId = localStorage.getItem('roomId');
+console.log(roomId);
+
+const socket = io({
+   auth: { 
+      userID: localStorage.getItem('userID'),
+      roomID: localStorage.getItem('roomID')
+   }
+});
+
+socket.on('connect', () => {
+   let userID = localStorage.getItem('userID');
+
+   if (!userID) {
+      userID = socket.id;
+      localStorage.setItem('userID', userID);
+   }
+
+   socket.emit('userID', userID);
+});
+
+
+socket.emit('joinRoom', message => {
+   console.log(message);
+});
 
 // Positions of the centerPiles
 const centerPileX = [420, 540, 660, 780];
 const centerPileY = 300;
 const endPileX = [420, 540, 660, 780];
 const endPileY = 120;
-
-let gameTimer = 0;
-
-//let suits = card_config.Suits;
-//let values = card_config.Values;
-
-// These enums are a gross hack, if they stay they go to another file
-//NON CONST enum for reverse mapping
-const suits = (() => {
-   const _enum = {
-      Hearts: 0,
-      Diamonds: 1,
-      Clubs: 2,
-      Spades: 3,
-   };
-
-   const _reverseEnum = {};
-   for (const key in _enum) {
-      _reverseEnum[_enum[key]] = key;
-   }
-   return Object.freeze(Object.assign({}, _enum, _reverseEnum));
-})();
-
-//NON CONST enum for reverse mapping
-const values = (() => {
-   const _enum = {
-      Ace: 0,
-      Two: 1,
-      Three: 2,
-      Four: 3,
-      Five: 4,
-      Six: 5,
-      Seven: 6,
-      Eight: 7,
-      Nine: 8,
-      Ten: 9,
-      Jack: 10,
-      Queen: 11,
-      King: 12,
-   };
-
-   const _reverseEnum = {};
-   for (const key in _enum) {
-      _reverseEnum[_enum[key]] = key;
-   }
-   return Object.freeze(Object.assign({}, _enum, _reverseEnum));
-})();
 
 let deckBottom = [];
 
@@ -91,7 +68,12 @@ class PlaygroundScene extends Phaser.Scene {
    constructor() {
       super('playground');
       this.mousePositionText = null;
+      this.demonPileCount = null;
+      this.deckPileCount = null;
       this.deck = null;
+      this.gameTimer = 0;
+      this.timeSinceLastMove = 0;
+      this.canRender = true;
    }
 
    preload() {
@@ -131,29 +113,49 @@ class PlaygroundScene extends Phaser.Scene {
       this.cameras.main.setBackgroundColor('#408080');
       createDeckBottom(this);
 
+      this.mousePositionText = this.add.text(10, 10, '', { font: '16px Courier', fill: '#ffffff' });
+      this.demonPileCount = this.add.text(220, 215, '', { font: '16px Courier', fill: '#ffffff' });
+      this.deckPileCount = this.add.text(92, 40, '', { font: '16px Courier', fill: '#ffffff' });
+
       // Draw the places cards can be placed
       for (let i = 0; i < centerPileX.length; i++) {
          deckBottom[i] = this.add.sprite(centerPileX[i], centerPileY - 180, 'cards' + suits[i], 0).setTint(0x408080);
-         deckBottom[i].setDepth(1);
+         deckBottom[i].setDepth(0);
       }
       for (let i = 0; i < centerPileX.length; i++) {
          deckBottom[i + 4] = this.add.sprite(centerPileX[i], centerPileY, 'deckBottomTexture');
       }
+      deckBottom[8] = this.add.sprite(100, endPileY, 'deckBottomTexture');
+      deckBottom[8] = this.add.sprite(230, endPileY, 'deckBottomTexture');
       deckBottom[8] = this.add.sprite(230, centerPileY, 'deckBottomTexture');
+
+      let deckSprite = this.add.sprite(100, 128, 'cardsDecks', 1);
+      deckSprite.setInteractive();
+
+      
 
       this.deck = new Deck(this);
       
       socket.on('recievePiles', (centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData) => {
-         console.log("Test1")
-         console.log(centerPilesData)
+         //console.log("Test1")
+         //console.log("Server:" + centerPilesData)
          
          this.updatePiles(this.deck, centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData);
+         //console.log("Client: " + centerPiles);
       });
 
-      socket.emit('dealCards'/*, (playerId) => {}*/);
       
-      this.renderCards();
 
+      // When any outbout event occurs, sets time since last update to 0
+      socket.onAnyOutgoing(() => {
+         this.timeSinceLastMove = 0;
+      });
+      
+      socket.emit('dealCards');
+      
+      setTimeout(() => {
+         this.renderCards();
+      }, 500);
 
       // Functions happen on clicking on deck, should be converted to an event listener
       this.input.on('pointerdown', (_pointer) => {
@@ -161,7 +163,6 @@ class PlaygroundScene extends Phaser.Scene {
          // These nested ifs look like trash, should be cleaned up soon
          var mouseX = this.input.mousePointer.x;
          var mouseY = this.input.mousePointer.y;
-         //console.log("Mouse Pos: " + mouseX, mouseY);
          if (mouseX >= 56 && mouseX <= 144 && mouseY >= 56 && mouseY <= 176) {
             let drawn = this.deck.drawCard(deckPile);
             if (drawn !== undefined) {
@@ -171,7 +172,9 @@ class PlaygroundScene extends Phaser.Scene {
                length = drawPile.length;
                for (let i = 0; i < length; i++) {
                   let card = drawPile.pop();
-                  deckPile[i] = card;  // This error doesn't break anything, an undefined cannot reach this point
+                  deckPile[i] = card;
+                  //card.getAt(0).setVisible(false);
+                  //card.getAt(0).setInteractive(false);
                }
             }
             this.sendPiles();
@@ -199,7 +202,10 @@ class PlaygroundScene extends Phaser.Scene {
       );
       
       this.input.on('dragstart', (_pointer, container) => {
-         // Save the original position at the start of the drag
+         this.canRender = false;
+
+         console.log(container.getAt(2).name)
+
          if (container.getData('pile') === drawPile) {
             container.setDepth(60);
          } else {
@@ -207,13 +213,17 @@ class PlaygroundScene extends Phaser.Scene {
                container.getData('pile')[i].setDepth(60 + i);
             }
          }
+         // Save the original position at the start of the drag
          container.setData('originX', container.x);
          container.setData('originY', container.y);
+         
      });
 
       // Gonna cut up a bunch of this logic later now that I understand how it works, the server
       //   will be doing a lot of the work here, or probably checking the work before allowing it to happen
       this.input.on('dragend', (_pointer, container) => {
+         this.canRender = true;
+
          var mouseX = this.input.mousePointer.x;
          var mouseY = this.input.mousePointer.y;
          //console.log('testing');
@@ -241,11 +251,10 @@ class PlaygroundScene extends Phaser.Scene {
             } else if (mouseX >= endPileX[i] - 44 && mouseX <= endPileX[i] + 44 &&
                mouseY >= endPileY - 62 && mouseY <= endPileY + 62) {
                for (let i = 0; i < endPiles.length; i++) {
-                  console.log(this.canPlaceOnEndPile(container, endPiles[i], i));
+                  //console.log(this.canPlaceOnEndPile(container, endPiles[i], i));
                   if (this.canPlaceOnEndPile(container, endPiles[i], i)) {
                      for (let j = 0; j < endPiles[i].length + 1; j++) {
-                        console.log(this.canPlaceOnEndPile(container, endPiles[i], i));
-                        console.log('testing');
+                        //console.log(this.canPlaceOnEndPile(container, endPiles[i], i));
                         // Remove the card from its original pile
                         let originalPile = container.getData('pile');
                         let index = originalPile.indexOf(container);
@@ -264,7 +273,7 @@ class PlaygroundScene extends Phaser.Scene {
             }
          }
          this.sendPiles();
-         //this.updatePiles(this.deck);
+         //updatePiles(deck, centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData);
 
          this.renderCards();
       });
@@ -277,13 +286,28 @@ class PlaygroundScene extends Phaser.Scene {
       mouseY = mouseY | 0;
       this.mousePositionText.setText(`Mouse Position: (${mouseX}, ${mouseY})`);
       this.demonPileCount.setText(`${demonPile.length}`);
+      this.deckPileCount.setText(`${deckPile.length}`);
+      //this.renderCards();
 
 
-      gameTimer++;
-      if ((gameTimer % 180 && gameTimer > 360) === 0) {
-         //console.log("count" + gameTimer)
-         this.sendPiles();
-         this.updatePiles(this.deck);
+      /*this.gameTimer++;
+      if ((this.gameTimer % 180) === 0) {
+         console.log("count: " + this.gameTimer);
+         console.log("count2: " + this.timeSinceLastMove);
+         this.sendPiles();  // Sends gamestate to server and also returns it to the client every 3 seconds
+         setTimeout(() => {
+            console.log("Timeout working");
+            this.renderCards();
+         }, 250);
+      }*/
+
+      this.timeSinceLastMove++;
+      if ((this.timeSinceLastMove % 300) === 0) { // Using 300 because higher tickrate is annoying, lower it later to 30
+         socket.emit('returnPiles');  // Fetches gamestate from server after 6 seconds of inactivity
+         //console.log("Test");
+         if (this.canRender === true) {
+            this.renderCards();
+        }
       }
    }
 
@@ -294,43 +318,32 @@ class PlaygroundScene extends Phaser.Scene {
    // Or its just a socket.on for when the board state updates, but then ther probably needs to be more than one
    //    function to update the board unless I want to waste a ton of effort
    renderCards() {
-      // Clear the current cards
-      this.children.removeAll();
-      this.mousePositionText = this.add.text(10, 10, '', { color: '#ffffff' });
-      this.demonPileCount = this.add.text(221, 216, '', { color: '#ffffff' });
-      //this.deckCount = this.add.text(95, 38, '', { color: '#ffffff' });
-
-      // Draw the places cards can be placed
-      for (let i = 0; i < centerPileX.length; i++) {
-         deckBottom[i] = this.add.sprite(centerPileX[i], centerPileY - 180, 'cards' + suits[i], 0).setTint(0x408080);
-      }
-      for (let i = 0; i < centerPileX.length; i++) {
-         deckBottom[i + 4] = this.add.sprite(centerPileX[i], centerPileY, 'deckBottomTexture');
-         deckBottom[i + 4].setDepth(0);
-      }
-      /*if (this.deck.length > 0) {
-         
-      }*/
-      deckBottom[8] = this.add.sprite(100, endPileY, 'deckBottomTexture');
-      deckBottom[8] = this.add.sprite(230, endPileY, 'deckBottomTexture');
-      deckBottom[8] = this.add.sprite(230, centerPileY, 'deckBottomTexture');
-      
-
       // Add the deck sprite
-      let deckSprite = this.add.sprite(100, 128, 'cardsDecks', 1);
-      deckSprite.setInteractive();
+      //console.log(this.children);
+
+      // Clears any cards that shouldn't be visible in the drawPile
+      this.deck.cards.forEach(card => {
+         //console.log(card.getAt(0));
+         if (deckPile.includes(card)) {
+            this.children.remove(card);
+            //card.getAt(0).setVisible(false);
+            //card.setInteractive(false);
+         }
+     });
+      
       
       // Draw each card at its appropriate position for centerPiles
       for (let i = 0; i < centerPiles.length; i++) {
          for (let j = 0; j < centerPiles[i].length; j++) {
-            let card = this.add.existing(centerPiles[i][j]);
-            card.setInteractive(new Phaser.Geom.Rectangle(-44, -62, 88, 124), Phaser.Geom.Rectangle.Contains);
+            let card = centerPiles[i][j];
+            //let card = this.add.existing(centerPiles[i][j]);
+            //card.setInteractive(new Phaser.Geom.Rectangle(-44, -62, 88, 124), Phaser.Geom.Rectangle.Contains);
+            card.setInteractive(true);
             this.input.setDraggable(card);
             card.x = centerPileX[i];
             card.y = centerPileY + 20 * j;
             card.getAt(0).setVisible(true);
             card.setDepth(j);
-            // Store a reference to the pile in the card
             card.setData('pile', centerPiles[i]);
          }
       }
@@ -338,52 +351,53 @@ class PlaygroundScene extends Phaser.Scene {
       for (let i = 0; i < endPiles.length; i++) {
          if (endPiles[i].length > 0) {
             let j = endPiles[i].length - 1; // Get the last card in the pile
-            let card = this.add.existing(endPiles[i][j]);
-            card.setInteractive(new Phaser.Geom.Rectangle(-44, -62, 88, 124), Phaser.Geom.Rectangle.Contains);
-            //this.input.setDraggable(card);
+            //let card = this.add.existing(endPiles[i][j]);
+            let card = endPiles[i][j];
+            //card.setInteractive(new Phaser.Geom.Rectangle(-44, -62, 88, 124), Phaser.Geom.Rectangle.Contains);
+            card.setInteractive(true);
+            this.input.setDraggable(card);
             card.x = endPileX[i];
             card.y = endPileY;
             if (card.getAt(0)){
                card.getAt(0).setVisible(true);
             }
             card.setDepth(j);
-            // Store a reference to the pile in the card
             card.setData('pile', endPiles[i]);
          }
       }
       // Draw each card at its appropriate position for drawPile
       for (let i = 0; i < drawPile.length; i++) {
          let card = this.add.existing(drawPile[i]);
+         //let card = drawPile[i];
          card.setInteractive(new Phaser.Geom.Rectangle(-44, -62, 88, 124), Phaser.Geom.Rectangle.Contains);
+         card.setInteractive(true);
          this.input.setDraggable(card);
          card.x = 230;
          card.y = endPileY;
          // Set faceup sprite to visible
          card.getAt(0).setVisible(true);
-         //this.flipCard(card, card.getAt(2).faceUp);
          card.setDepth(i + 5);
-         // Store a reference to the pile in the card
          card.setData('pile', drawPile);
       }
       // Draw each card at its appropriate position for demonPile
       for (let i = 0; i < demonPile.length; i++) {
          let card = this.add.existing(demonPile[i]);
-         card.setInteractive(new Phaser.Geom.Rectangle(-44, -62, 88, 124), Phaser.Geom.Rectangle.Contains);
+         //card = demonPile[i];
+         //card.setInteractive(new Phaser.Geom.Rectangle(-44, -62, 88, 124), Phaser.Geom.Rectangle.Contains);
+         card.setInteractive(true);
          this.input.setDraggable(card);
          card.x = 230;
          card.y = centerPileY;
-         // Set faceup sprite to visible
          card.getAt(0).setVisible(true);
-         //this.flipCard(card, card.getAt(2).faceUp);
          card.setDepth(i + 5);
          // Store a reference to the pile in the card
          card.setData('pile', demonPile);
       }
 
       // Need to make gamescene for the other players, or do this on containers of gameobjects
-      if (true) {
+      /*if (true) {
          this.cameras.main.rotation += 4 * 3.1415926/2;
-      }
+      }*/
    }
 
    canPlaceOnEndPile(container, pile, pileIndex) {
@@ -424,14 +438,14 @@ class PlaygroundScene extends Phaser.Scene {
          return true;
       //  Proceed if the card is from the demonPile and the bottom card is undefined
       } else if (bottomCard === undefined && cardToAdd.getData('pile') === demonPile) {
-         console.log("Card is from demonPile");
+         //console.log("Card is from demonPile");
          return true;
       } else if (bottomCard === undefined) {
          return false;
       }
       
       let cardBottom = bottomCard.getAt(2);
-      console.log(cardBottom.value);
+      //console.log(cardBottom.value);
       if (cardAdd.value !== cardBottom.value - 1) {
          return false;
       }
@@ -520,12 +534,12 @@ class PlaygroundScene extends Phaser.Scene {
          deckPileData[i] = pileData;
       };
 
-      socket.volatile.emit('sendPiles', centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData);
-      console.log("Test2")
+      socket.emit('sendPiles', centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData);
+      //console.log("Test2")
    }
 
    // Recieves the gamestate sent from the server and updates the client
-   updatePiles(deck, centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData) {
+   async updatePiles(deck, centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData) {
       
       // This is starting to reach functionality
 
@@ -544,7 +558,7 @@ class PlaygroundScene extends Phaser.Scene {
       demonPile.length = 0;
       deckPile.length = 0;
 
-      console.log(centerPilesData);
+      //console.log(centerPilesData);
 
       for (let i = 0; i < centerPilesData.length; i++) {
          for (let j = 0; j < centerPilesData[i].length; j++) {
@@ -566,13 +580,17 @@ class PlaygroundScene extends Phaser.Scene {
          deckPile.push(deck.cards.find(card => card.getAt(2).name === deckPileData[i].name));
       }
 
-      console.log('updating');
-      this.renderCards();
+      //console.log('updating');
+      if (this.canRender === true) {
+         this.renderCards();
+      }
+      //this.renderCards();
    }
 
 
 }
 
+//const randomId = () => crypto.randomBytes(8).toString("hex");
 
 
 const config = {

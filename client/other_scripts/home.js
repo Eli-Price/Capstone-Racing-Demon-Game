@@ -3,9 +3,9 @@
 const joinGameButton = document.getElementById('joinGameButton');
 
 joinGameButton.addEventListener('click', () => {
-  const roomId = document.querySelector('.input-field input').value;
-  localStorage.setItem('roomId', roomId);
-  console.log(`Joining room ${roomId}`);
+  const roomID = document.querySelector('.input-field input').value;
+  localStorage.setItem('roomID', roomID);
+  console.log(`Joining room: ` + localStorage.getItem('roomID'));
 
   // Navigate to the game page
   window.location.href = `../pages/game.html`;
