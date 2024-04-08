@@ -11,8 +11,9 @@ import { dirname, join } from 'node:path';
 import { Server } from 'socket.io';*/
 
 
-const roomId = localStorage.getItem('roomId');
-console.log(roomId);
+const roomID = localStorage.getItem('roomID');
+const userID = localStorage.getItem('userID');
+console.log(roomID);
 
 const socket = io({
    auth: { 
@@ -22,20 +23,28 @@ const socket = io({
 });
 
 socket.on('connect', () => {
-   let userID = localStorage.getItem('userID');
-
+   //let userID = localStorage.getItem('userID');
    if (!userID) {
       userID = socket.id;
       localStorage.setItem('userID', userID);
    }
-
-   socket.emit('userID', userID);
+   socket.emit('joinGame', { roomID }, (response) => {
+      if (response.success) {
+        // If the server responded with success, navigate to the game page
+        // window.location.href = `../pages/game.html`;
+      } else {
+        // If the server responded with an error, display the error message
+        const errorMessage = document.createElement('p');
+        errorMessage.textContent = response.message;
+        //document.querySelector('.input-field').appendChild(errorMessage);
+      }
+   });
 });
 
 
-socket.emit('joinRoom', message => {
+/*socket.emit('joinRoom', message => {
    console.log(message);
-});
+});*/
 
 // Positions of the centerPiles
 const centerPileX = [420, 540, 660, 780];
@@ -131,14 +140,27 @@ class PlaygroundScene extends Phaser.Scene {
 
       let deckSprite = this.add.sprite(100, 128, 'cardsDecks', 1);
       deckSprite.setInteractive();
+      //deckSprite.setScale(0.5);
 
       
 
       this.deck = new Deck(this);
       
-      socket.on('recievePiles', (centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData) => {
-         //console.log("Test1")
-         //console.log("Server:" + centerPilesData)
+      socket.on('recievePiles', (allPlayersCards)/*(centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData)*/ => {
+         //console.log(allPlayersCards[0]);
+
+         let playerDeck = allPlayersCards.find(deck => deck.userID === userID);
+         if (playerDeck) {
+            playerDeck.cards.forEach(card => {
+               this.renderCards(card);
+            });
+         }
+
+         let centerPilesData = allPlayersCards[0].centerPiles;
+         let endPilesData = allPlayersCards[0].endPiles;
+         let drawPileData = allPlayersCards[0].drawPile;
+         let demonPileData = allPlayersCards[0].demonPile;
+         let deckPileData = allPlayersCards[0].deckPile;
          
          this.updatePiles(this.deck, centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData);
          //console.log("Client: " + centerPiles);
@@ -289,22 +311,10 @@ class PlaygroundScene extends Phaser.Scene {
       this.deckPileCount.setText(`${deckPile.length}`);
       //this.renderCards();
 
-
-      /*this.gameTimer++;
-      if ((this.gameTimer % 180) === 0) {
-         console.log("count: " + this.gameTimer);
-         console.log("count2: " + this.timeSinceLastMove);
-         this.sendPiles();  // Sends gamestate to server and also returns it to the client every 3 seconds
-         setTimeout(() => {
-            console.log("Timeout working");
-            this.renderCards();
-         }, 250);
-      }*/
-
       this.timeSinceLastMove++;
       if ((this.timeSinceLastMove % 300) === 0) { // Using 300 because higher tickrate is annoying, lower it later to 30
          socket.emit('returnPiles');  // Fetches gamestate from server after 6 seconds of inactivity
-         //console.log("Test");
+         console.log("Test");
          if (this.canRender === true) {
             this.renderCards();
         }
@@ -313,24 +323,17 @@ class PlaygroundScene extends Phaser.Scene {
 
    // This is more like what I will want to do, the server should be checking if a card goes on a stack,
    //   and then sending back the new state of the game
-   // Only check the player's board on drag end, otherwise it doesn't need to be updated.
-   // Perhaps call this on an if() which works when the server sends back a new state of the game
    // Or its just a socket.on for when the board state updates, but then ther probably needs to be more than one
-   //    function to update the board unless I want to waste a ton of effort
+   //    function to update the board unless I want to waste a ton of the servers time
    renderCards() {
       // Add the deck sprite
-      //console.log(this.children);
 
       // Clears any cards that shouldn't be visible in the drawPile
       this.deck.cards.forEach(card => {
-         //console.log(card.getAt(0));
          if (deckPile.includes(card)) {
             this.children.remove(card);
-            //card.getAt(0).setVisible(false);
-            //card.setInteractive(false);
          }
-     });
-      
+      });
       
       // Draw each card at its appropriate position for centerPiles
       for (let i = 0; i < centerPiles.length; i++) {
@@ -599,7 +602,7 @@ const config = {
    scale: {
       parent: 'game',
       width: 900,//1500,
-      height: 700,//1023,
+      height: 900,//1023,
       mode: Phaser.Scale.NONE,
       autoCenter: Phaser.Scale.CENTER_BOTH,
    },

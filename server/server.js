@@ -22,20 +22,16 @@ const io = new Server(server, {
     //adapter: createAdapter()
 });
 
+// It doesn't work
 instrument(io, { auth: false });
 
-
-const randomId = () => crypto.randomBytes(8).toString("hex");
 const sessionStore = new InMemorySessionStore();
 
-
-//deck.Deal(centerPiles, endPiles, demonPile, deckPile);
-//console.log(centerPiles);
-
 const __dirname = dirname(fileURLToPath(import.meta.url));
-console.log(__dirname);
+//console.log(__dirname);
 
 // I'm not really sure if I should use these, don't know yet. Will need to change quite a bit if I don't, I think.
+//  maybe it's bad practice, but gonna use it for now.
 app.use(express.static(path.join(__dirname, '../client')));
 //app.use(express.static(path.join(__dirname, '../dist')));
 app.use(express.static(path.join(__dirname, '../assets')));
@@ -48,12 +44,6 @@ app.get('/', (req, res) => {
 
 
 io.on('connection', (socket) => {
-    /*socket.on('userID', (userID) => {
-        socket.userID = userID;
-        console.log('user ' + socket.userID + ' connected');
-    });*/
-    //console.log('user ' + socket.userID + ' connected');
-    
     const userID = socket.handshake.auth.userID;
     const roomID = socket.handshake.auth.roomID;
 
@@ -61,7 +51,6 @@ io.on('connection', (socket) => {
     let session = sessionStore.findSession(userID);
 
     // If the session exists and the roomID matches
-    console.log(userID)
     if (session && session.roomID === roomID) {
         // Restore the allCards object from the session
         socket.allCards = session.allCards;
@@ -81,40 +70,64 @@ io.on('connection', (socket) => {
         console.log('user ' + userID + ' disconnected');
     });
 
-    socket.on('joinRoom', (cb) => {
-        console.log('User: ' + userID + ', Joining room ' + roomID);
-        socket.join(roomID);
-        cb('Joined room ' + roomID);
+    socket.on('createGame', ({ roomID }) => {
+        sessionStore.createRoom(roomID);
+    });
 
-        socket.emit('playerId', userID);
-        //console.log('playerId: ' + socket.userID);
-
-        
-
-        // broadcast to the room that a new user has joined
-        socket.to(roomID).emit('userJoined', 'A new user has joined the room');
+    socket.on('joinGame', ({ roomID }, callback) => {
+        if (sessionStore.isRoomActive(roomID)) {
+            console.log('User: ' + userID + ', Joining room ' + roomID);
+            callback({ success: true });
+            socket.join(roomID);
+            sessionStore.addPlayerToRoom(roomID, userID);
+            socket.to(roomID).emit('userJoined', 'A new user has joined the room');
+        } else {
+            callback({ success: false, message: 'Room does not exist' });
+        }
     });
 
     socket.on('dealCards', () => {
         //let playerCards = createAllCards(userID);
-        //socket.allCards = playerCards;
         //console.log(socket.allCards.centerPile1);
-        socket.emit('recievePiles', socket.allCards.centerPiles, socket.allCards.endPiles, socket.allCards.drawPile, 
-                        socket.allCards.demonPile, socket.allCards.deckPile);
+        const room = sessionStore.getRoom(roomID);
+        const allPlayersCards = room.players.map(playerID => {
+            const session = sessionStore.findSession(playerID);
+            console.log(session.allCards);
+            return session.allCards;
+        });
+        console.log(allPlayersCards)
+        socket.emit('recievePiles', userID, allPlayersCards);
+        /*socket.emit('recievePiles', socket.allCards.centerPiles, socket.allCards.endPiles, socket.allCards.drawPile, 
+                        socket.allCards.demonPile, socket.allCards.deckPile);*/
     });
 
     socket.on('sendPiles', (centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData) => {
         //console.log('Updating piles');
 
         updateCards(socket.allCards, centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData);
-        socket.emit('recievePiles', socket.allCards.centerPiles, socket.allCards.endPiles, socket.allCards.drawPile, 
-                        socket.allCards.demonPile, socket.allCards.deckPile);
+        const room = sessionStore.getRoom(roomID);
+        const allPlayersCards = room.players.map(playerID => {
+            const session = sessionStore.findSession(playerID);
+            console.log(session.allCards);
+            return session.allCards;
+        });
+        console.log(allPlayersCards)
+        socket.emit('recievePiles', userID, allPlayersCards);
+        /*socket.emit('recievePiles', socket.allCards.centerPiles, socket.allCards.endPiles, socket.allCards.drawPile, 
+                        socket.allCards.demonPile, socket.allCards.deckPile);*/
     });
 
-    socket.on('returnPiles', () => {
-        console.log(socket.allCards.centerPiles);
-        socket.emit('recievePiles', socket.allCards.centerPiles, socket.allCards.endPiles, socket.allCards.drawPile, 
-                        socket.allCards.demonPile, socket.allCards.deckPile);
+    socket.on('returnPiles', () => {;
+        const room = sessionStore.getRoom(roomID);
+        const allPlayersCards = room.players.map(playerID => {
+            const session = sessionStore.findSession(playerID);
+            console.log(session.allCards);
+            return session.allCards;
+        });
+        console.log(allPlayersCards)
+        socket.emit('recievePiles', userID, allPlayersCards);
+        /*socket.emit('recievePiles', socket.allCards.centerPiles, socket.allCards.endPiles, socket.allCards.drawPile, 
+                        socket.allCards.demonPile, socket.allCards.deckPile);*/
     });
 });
 
