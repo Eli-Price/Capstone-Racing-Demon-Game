@@ -3,10 +3,10 @@
 
 export class Deck {
    cards = [];
-   playerID = 0;
+   userID = null;
 
-   constructor(playerID) {
-      this.playerID = playerID;
+   constructor(userID) {
+      this.userID = userID;
       const suits = ['Hearts', 'Diamonds', 'Clubs', 'Spades'];
       for (let suit = 0; suit < suits.length; suit++) {
          for (let value = 0; value < 13; value++) {

@@ -1,5 +1,10 @@
-# phaser-typescript-vite-eslint-prettier-template
+# Capstone Racing Demon Game
 
-Boilerplate Phaser 3 project configured with TypeScript, ESLint, and Prettier for clean code
-The project is based on a card creation system borrowed from another project, it may get cut later.
-All that got cut, was basically useless. Gave me good ideas though.
+Abstract:
+The project is a multiplayer online adaptation of the classic card game Racing Demon, utilizing the Phaser3 engine for 2D game development with WebGL and Canvas rendering. Synchronous gameplay presents a challenge, addressed by implementing WebSocket communication for real-time messaging between server and clients. There are many options for hosting including Google, Amazon, and many others.
+
+The game structure supports 4-player rooms with simultaneous room handling. Server-side code manages critical calculations to prevent cheating, while client-side code handles user inputs and displaying the game state. Room management, low-latency networking, and efficient data synchronization are integral for a smooth multiplayer experience.
+
+The UI design focuses on creating an intuitive and visually appealing interface, with feedback systems incorporating visual and audio cues for game actions. Regular performance testing and cross-browser compatibility checks are essential.
+
+Thorough documentation, including developer documentation and player guides, is maintained for future development and debugging. Iterative testing and improvements are prioritized, possibly including a feedback system to easily deliver feedback reports as emails. Overall, the project aims to provide a stable, online multiplayer experience for Racing Demon enthusiasts.

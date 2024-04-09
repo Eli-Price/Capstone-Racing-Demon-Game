@@ -4,6 +4,7 @@ import Card from './card.js';
 import { suits, values} from './card_config.js';
 import { Deck } from './deck.js';
 import { createDeckBottom } from './deck_bottom.js';
+import { renderCards } from './render.js';
 /*import express from 'express';
 import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
@@ -28,8 +29,10 @@ socket.on('connect', () => {
       userID = socket.id;
       localStorage.setItem('userID', userID);
    }
+   // This needs error handling
    socket.emit('joinGame', { roomID }, (response) => {
       if (response.success) {
+         //socket.join(roomID);
         // If the server responded with success, navigate to the game page
         // window.location.href = `../pages/game.html`;
       } else {
@@ -42,10 +45,6 @@ socket.on('connect', () => {
 });
 
 
-/*socket.emit('joinRoom', message => {
-   console.log(message);
-});*/
-
 // Positions of the centerPiles
 const centerPileX = [420, 540, 660, 780];
 const centerPileY = 300;
@@ -54,7 +53,7 @@ const endPileY = 120;
 
 let deckBottom = [];
 
-// Create arrays to store the cards in each center pile
+/*// Create arrays to store the cards in each center pile
 let centerPile1 = [];
 let centerPile2 = [];
 let centerPile3 = [];
@@ -71,7 +70,7 @@ const centerPiles = [centerPile1, centerPile2, centerPile3, centerPile4];
 const endPiles = [endPile1, endPile2, endPile3, endPile4];
 const drawPile = [];
 const demonPile = [];
-const deckPile = [];
+const deckPile = [];*/
 
 class PlaygroundScene extends Phaser.Scene {
    constructor() {
@@ -79,10 +78,10 @@ class PlaygroundScene extends Phaser.Scene {
       this.mousePositionText = null;
       this.demonPileCount = null;
       this.deckPileCount = null;
-      this.deck = null;
       this.gameTimer = 0;
       this.timeSinceLastMove = 0;
       this.canRender = true;
+      this.decks = [];
    }
 
    preload() {
@@ -128,42 +127,82 @@ class PlaygroundScene extends Phaser.Scene {
 
       // Draw the places cards can be placed
       for (let i = 0; i < centerPileX.length; i++) {
-         deckBottom[i] = this.add.sprite(centerPileX[i], centerPileY - 180, 'cards' + suits[i], 0).setTint(0x408080);
+         deckBottom.push(this.add.sprite(centerPileX[i], centerPileY - 180, 'cards' + suits[i], 0).setTint(0x408080));
          deckBottom[i].setDepth(0);
       }
       for (let i = 0; i < centerPileX.length; i++) {
-         deckBottom[i + 4] = this.add.sprite(centerPileX[i], centerPileY, 'deckBottomTexture');
+         deckBottom.push(this.add.sprite(centerPileX[i], centerPileY, 'deckBottomTexture'));
       }
-      deckBottom[8] = this.add.sprite(100, endPileY, 'deckBottomTexture');
-      deckBottom[8] = this.add.sprite(230, endPileY, 'deckBottomTexture');
-      deckBottom[8] = this.add.sprite(230, centerPileY, 'deckBottomTexture');
+      deckBottom.push(this.add.sprite(100, endPileY, 'deckBottomTexture'));
+      deckBottom.push(this.add.sprite(230, endPileY, 'deckBottomTexture'));
+      deckBottom.push(this.add.sprite(230, centerPileY, 'deckBottomTexture'));
 
       let deckSprite = this.add.sprite(100, 128, 'cardsDecks', 1);
       deckSprite.setInteractive();
       //deckSprite.setScale(0.5);
 
+      // Draw the places cards can be placed again 500px lower
+      for (let i = 0; i < centerPileX.length; i++) {
+         deckBottom[i] = this.add.sprite(centerPileX[i], centerPileY - 180 + 400, 'cards' + suits[i], 0).setTint(0x408080);
+         deckBottom[i].setDepth(0);
+      }
+      for (let i = 0; i < centerPileX.length; i++) {
+         deckBottom[i + 4] = this.add.sprite(centerPileX[i], centerPileY + 400, 'deckBottomTexture');
+      }
+      deckBottom[8] = this.add.sprite(100, endPileY + 400, 'deckBottomTexture');
+      deckBottom[8] = this.add.sprite(230, endPileY + 400, 'deckBottomTexture');
+      deckBottom[8] = this.add.sprite(230, centerPileY + 400, 'deckBottomTexture');
+
+      let deck2Sprite = this.add.sprite(100, 128 + 400, 'cardsDecks', 1);
+      deck2Sprite.setInteractive();
+
       
+      socket.emit('dealCards', userID);
+      /*setTimeout(() => {
+         renderCards(this);
+      }, 500);*/
 
-      this.deck = new Deck(this);
+
+      socket.on('userJoined', (message) => {
+         console.log(message);
+      });
+
       
-      socket.on('recievePiles', (allPlayersCards)/*(centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData)*/ => {
-         //console.log(allPlayersCards[0]);
+      socket.on('recievePiles', (userID, allPlayersCards) => {
+         //console.log(userID);
+         console.log(allPlayersCards);
 
-         let playerDeck = allPlayersCards.find(deck => deck.userID === userID);
-         if (playerDeck) {
-            playerDeck.cards.forEach(card => {
-               this.renderCards(card);
-            });
-         }
+         allPlayersCards.forEach(allCards => {
+            let foundDeck = this.decks.find(aDeck => aDeck.deck.userID === allCards.deck.userID);
+            //console.log(this.decks.find(theseCards => theseCards.deck.userID === userID));
+            //console.log(allCards.deck.userID);
+            if (!foundDeck) {
+               let newDeck = this.createAllCards(allCards.deck.userID);
+               this.decks.push(newDeck);
+            }
+         });
+         console.log(this.decks);
 
-         let centerPilesData = allPlayersCards[0].centerPiles;
-         let endPilesData = allPlayersCards[0].endPiles;
-         let drawPileData = allPlayersCards[0].drawPile;
-         let demonPileData = allPlayersCards[0].demonPile;
-         let deckPileData = allPlayersCards[0].deckPile;
-         
-         this.updatePiles(this.deck, centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData);
-         //console.log("Client: " + centerPiles);
+         // get the data of all the players,
+         allPlayersCards.forEach(allCards => {
+            let foundDeck = this.decks.find(aDeck => aDeck.deck.userID === allCards.deck.userID);
+
+            let centerPilesData = allCards.centerPiles;
+            let endPilesData = allCards.endPiles;
+            let drawPileData = allCards.drawPile;
+            let demonPileData = allCards.demonPile;
+            let deckPileData = allCards.deckPile;
+            console.log(foundDeck);
+
+            this.updatePiles(foundDeck, foundDeck.deck, centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData);
+         });
+
+         this.decks.forEach(allCards => {
+            //console.log(allCards.deck.userID);
+            //let foundDeck = allPlayersCards.find(allCards => allCards.deck.userID === userID);
+            //renderCards(this, allCards, allCards.deck.userID, centerPileX, centerPileY, endPileX, endPileY);
+         });
+
       });
 
       
@@ -172,63 +211,62 @@ class PlaygroundScene extends Phaser.Scene {
       socket.onAnyOutgoing(() => {
          this.timeSinceLastMove = 0;
       });
-      
-      socket.emit('dealCards');
-      
-      setTimeout(() => {
-         this.renderCards();
-      }, 500);
 
       // Functions happen on clicking on deck, should be converted to an event listener
       this.input.on('pointerdown', (_pointer) => {
+         let allCards = this.decks.find(allCards => allCards.deck.userID === userID);
+         console.log(this.decks);
+         console.log(userID);
          // Dupe code on variable declarations, probably could be cleaned up to be nicer
          // These nested ifs look like trash, should be cleaned up soon
          var mouseX = this.input.mousePointer.x;
          var mouseY = this.input.mousePointer.y;
          if (mouseX >= 56 && mouseX <= 144 && mouseY >= 56 && mouseY <= 176) {
-            let drawn = this.deck.drawCard(deckPile);
+            let drawn = allCards.deck.drawCard(allCards.deckPile);
             if (drawn !== undefined) {
-               drawPile.push(drawn);
+               allCards.drawPile.push(drawn);
                deckBottom[8].setVisible(false);
             } else {
-               length = drawPile.length;
+               length = allCards.drawPile.length;
                for (let i = 0; i < length; i++) {
-                  let card = drawPile.pop();
-                  deckPile[i] = card;
+                  let card = allCards.drawPile.pop();
+                  allCards.deckPile[i] = card;
                   //card.getAt(0).setVisible(false);
                   //card.getAt(0).setInteractive(false);
                }
             }
-            this.sendPiles();
-            this.renderCards();
+            this.sendPiles(allCards);
+            renderCards(this, allCards, userID, centerPileX, centerPileY, endPileX, endPileY);
          }
       });
 
       this.input.on('drag', (_pointer, container, dragX, dragY) => {
-            container.setData({x: container.x, y: container.y});
-            container.x = dragX;
-            container.y = dragY;
-            let pile = container.getData('pile')
-            let containerIndex = pile.indexOf(container);
-            if ( !(pile === drawPile || pile === demonPile)) {
-               for (let i = 0; i < pile.length; i++) {
-                  let card = pile[i];
-                  if (card.getAt(2).value <= container.getAt(2).value) {
-                     card.x = container.x;
-                     card.y = container.y + (20 * (i - containerIndex));
-                     card.depth = container.depth + i; // Dont need the 1 but changing it might break things
-                  }
+         let allCards = this.decks.find(allCards => allCards.deck.userID === userID);
+
+         container.setData({x: container.x, y: container.y});
+         container.x = dragX;
+         container.y = dragY;
+         let pile = container.getData('pile')
+         let containerIndex = pile.indexOf(container);
+         if ( !(pile === allCards.drawPile || pile === allCards.demonPile)) {
+            for (let i = 0; i < pile.length; i++) {
+               let card = pile[i];
+               if (card.getAt(2).value <= container.getAt(2).value) {
+                  card.x = container.x;
+                  card.y = container.y + (20 * (i - containerIndex));
+                  card.depth = container.depth + i; // Dont need the 1 but changing it might break things
                }
             }
          }
-      );
+      });
       
       this.input.on('dragstart', (_pointer, container) => {
+         let allCards = this.decks.find(allCards => allCards.deck.userID === userID);
          this.canRender = false;
 
          console.log(container.getAt(2).name)
 
-         if (container.getData('pile') === drawPile) {
+         if (container.getData('pile') === allCards.drawPile) {
             container.setDepth(60);
          } else {
             for (let i = 0; i < container.getData('pile').length; i++) {
@@ -244,6 +282,10 @@ class PlaygroundScene extends Phaser.Scene {
       // Gonna cut up a bunch of this logic later now that I understand how it works, the server
       //   will be doing a lot of the work here, or probably checking the work before allowing it to happen
       this.input.on('dragend', (_pointer, container) => {
+         // Find your own allCards object in decks to use
+         let allCards = this.decks.find(allCards => allCards.deck.userID === userID);
+         console.log(allCards);
+
          this.canRender = true;
 
          var mouseX = this.input.mousePointer.x;
@@ -252,30 +294,30 @@ class PlaygroundScene extends Phaser.Scene {
          for (let i = 0; i < centerPileX.length; i++) {
             // Y Position modifiers are for the height of the pile
             if (mouseX >= centerPileX[i] - 44 && mouseX <= centerPileX[i] + 44 &&
-                  mouseY >= centerPileY + ((centerPiles[i].length - 1) * 20) - 62 && 
-                  mouseY <= centerPileY + ((centerPiles[i].length - 1) * 20) + 62) {
+                  mouseY >= centerPileY + ((allCards.centerPiles[i].length - 1) * 20) - 62 && 
+                  mouseY <= centerPileY + ((allCards.centerPiles[i].length - 1) * 20) + 62) {
                // console.log("CenterPile length: " + centerPiles[i].length)
-               if (this.canAddToCenterPile(container, centerPiles[i][centerPiles[i].length - 1])) {
+               if (this.canAddToCenterPile(container, allCards.centerPiles[i][allCards.centerPiles[i].length - 1], allCards)) {
                   // Remove the card from its original pile
                   let originalPile = container.getData('pile');
                   let index = originalPile.indexOf(container);
                   if (index !== -1) {
                      let cardsToMove = originalPile.splice(index);
-                     centerPiles[i].push(...cardsToMove);
+                     allCards.centerPiles[i].push(...cardsToMove);
                   }
-                  this.renderCards();
+                  //this.renderCards();
                   //console.log('testing');
                   break;
                }
                // Store a reference to the new pile in the card
-               container.setData('pile', centerPiles[i]);
+               container.setData('pile', allCards.centerPiles[i]);
                break;
             } else if (mouseX >= endPileX[i] - 44 && mouseX <= endPileX[i] + 44 &&
                mouseY >= endPileY - 62 && mouseY <= endPileY + 62) {
-               for (let i = 0; i < endPiles.length; i++) {
+               for (let i = 0; i < allCards.endPiles.length; i++) {
                   //console.log(this.canPlaceOnEndPile(container, endPiles[i], i));
-                  if (this.canPlaceOnEndPile(container, endPiles[i], i)) {
-                     for (let j = 0; j < endPiles[i].length + 1; j++) {
+                  if (this.canPlaceOnEndPile(container, allCards.endPiles[i], i)) {
+                     for (let j = 0; j < allCards.endPiles[i].length + 1; j++) {
                         //console.log(this.canPlaceOnEndPile(container, endPiles[i], i));
                         // Remove the card from its original pile
                         let originalPile = container.getData('pile');
@@ -284,20 +326,20 @@ class PlaygroundScene extends Phaser.Scene {
                               originalPile.splice(index, 1);
                         }
                         // Add the card to the end pile
-                        endPiles[i].push(container);
+                        allCards.endPiles[i].push(container);
       
                         // Store a reference to the new pile in the card
-                        container.setData('pile', endPiles[i]);
+                        container.setData('pile', allCards.endPiles[i]);
                         break;
                      }
                   }
                }
             }
          }
-         this.sendPiles();
+         this.sendPiles(allCards);
          //updatePiles(deck, centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData);
 
-         this.renderCards();
+         renderCards(this, allCards, allCards.deck.userID, centerPileX, centerPileY, endPileX, endPileY);
       });
    }
 
@@ -307,8 +349,8 @@ class PlaygroundScene extends Phaser.Scene {
       mouseX = mouseX | 0;
       mouseY = mouseY | 0;
       this.mousePositionText.setText(`Mouse Position: (${mouseX}, ${mouseY})`);
-      this.demonPileCount.setText(`${demonPile.length}`);
-      this.deckPileCount.setText(`${deckPile.length}`);
+      //this.demonPileCount.setText(`${demonPile.length}`);
+      //this.deckPileCount.setText(`${deckPile.length}`);
       //this.renderCards();
 
       this.timeSinceLastMove++;
@@ -316,92 +358,16 @@ class PlaygroundScene extends Phaser.Scene {
          socket.emit('returnPiles');  // Fetches gamestate from server after 6 seconds of inactivity
          console.log("Test");
          if (this.canRender === true) {
-            this.renderCards();
+            //console.log(this.decks.length);
+            this.decks.forEach(allCards => {
+               console.log(allCards.deck.userID);
+               renderCards(this, allCards, allCards.deck.userID, centerPileX, centerPileY, endPileX, endPileY);
+           });
         }
       }
    }
 
-   // This is more like what I will want to do, the server should be checking if a card goes on a stack,
-   //   and then sending back the new state of the game
-   // Or its just a socket.on for when the board state updates, but then ther probably needs to be more than one
-   //    function to update the board unless I want to waste a ton of the servers time
-   renderCards() {
-      // Add the deck sprite
-
-      // Clears any cards that shouldn't be visible in the drawPile
-      this.deck.cards.forEach(card => {
-         if (deckPile.includes(card)) {
-            this.children.remove(card);
-         }
-      });
-      
-      // Draw each card at its appropriate position for centerPiles
-      for (let i = 0; i < centerPiles.length; i++) {
-         for (let j = 0; j < centerPiles[i].length; j++) {
-            let card = centerPiles[i][j];
-            //let card = this.add.existing(centerPiles[i][j]);
-            //card.setInteractive(new Phaser.Geom.Rectangle(-44, -62, 88, 124), Phaser.Geom.Rectangle.Contains);
-            card.setInteractive(true);
-            this.input.setDraggable(card);
-            card.x = centerPileX[i];
-            card.y = centerPileY + 20 * j;
-            card.getAt(0).setVisible(true);
-            card.setDepth(j);
-            card.setData('pile', centerPiles[i]);
-         }
-      }
-      // Draw each card at its appropriate position for endPiles
-      for (let i = 0; i < endPiles.length; i++) {
-         if (endPiles[i].length > 0) {
-            let j = endPiles[i].length - 1; // Get the last card in the pile
-            //let card = this.add.existing(endPiles[i][j]);
-            let card = endPiles[i][j];
-            //card.setInteractive(new Phaser.Geom.Rectangle(-44, -62, 88, 124), Phaser.Geom.Rectangle.Contains);
-            card.setInteractive(true);
-            this.input.setDraggable(card);
-            card.x = endPileX[i];
-            card.y = endPileY;
-            if (card.getAt(0)){
-               card.getAt(0).setVisible(true);
-            }
-            card.setDepth(j);
-            card.setData('pile', endPiles[i]);
-         }
-      }
-      // Draw each card at its appropriate position for drawPile
-      for (let i = 0; i < drawPile.length; i++) {
-         let card = this.add.existing(drawPile[i]);
-         //let card = drawPile[i];
-         card.setInteractive(new Phaser.Geom.Rectangle(-44, -62, 88, 124), Phaser.Geom.Rectangle.Contains);
-         card.setInteractive(true);
-         this.input.setDraggable(card);
-         card.x = 230;
-         card.y = endPileY;
-         // Set faceup sprite to visible
-         card.getAt(0).setVisible(true);
-         card.setDepth(i + 5);
-         card.setData('pile', drawPile);
-      }
-      // Draw each card at its appropriate position for demonPile
-      for (let i = 0; i < demonPile.length; i++) {
-         let card = this.add.existing(demonPile[i]);
-         //card = demonPile[i];
-         //card.setInteractive(new Phaser.Geom.Rectangle(-44, -62, 88, 124), Phaser.Geom.Rectangle.Contains);
-         card.setInteractive(true);
-         this.input.setDraggable(card);
-         card.x = 230;
-         card.y = centerPileY;
-         card.getAt(0).setVisible(true);
-         card.setDepth(i + 5);
-         // Store a reference to the pile in the card
-         card.setData('pile', demonPile);
-      }
-
-      // Need to make gamescene for the other players, or do this on containers of gameobjects
-      /*if (true) {
-         this.cameras.main.rotation += 4 * 3.1415926/2;
-      }*/
-   }
+   
 
    canPlaceOnEndPile(container, pile, pileIndex) {
       // Check if the suit of the card matches the suit of the pile
@@ -434,13 +400,13 @@ class PlaygroundScene extends Phaser.Scene {
       }
    }
 
-   canAddToCenterPile(cardToAdd, bottomCard) {
+   canAddToCenterPile(cardToAdd, bottomCard, allCards) {
       // Check if the value of the card to add is one less than the value of the bottom card
       let cardAdd = cardToAdd.getAt(2);
       if (cardAdd.value === 12 && bottomCard === undefined) {
          return true;
       //  Proceed if the card is from the demonPile and the bottom card is undefined
-      } else if (bottomCard === undefined && cardToAdd.getData('pile') === demonPile) {
+      } else if (bottomCard === undefined && cardToAdd.getData('pile') === allCards.demonPile) {
          //console.log("Card is from demonPile");
          return true;
       } else if (bottomCard === undefined) {
@@ -467,26 +433,20 @@ class PlaygroundScene extends Phaser.Scene {
   }
 
    // Sends the users gamestate to the server
-   sendPiles() {
+   sendPiles(allCards) {
+      console.log(allCards.centerPiles);
       let centerPilesData = [[],[],[],[]];
       let endPilesData = [[],[],[],[]];
       let drawPileData = [];
       let demonPileData = [];
       let deckPileData = [];
 
-      /*let pileData = {
-         name : '',
-         suit : 0,
-         value : 0
-         //pile: demonPile[0].getData('pile')
-      };*/
-
-      for (let i = 0; i < centerPiles.length; i++) {
-         for (let j = 0; j < centerPiles[i].length; j++) {
+      for (let i = 0; i < allCards.centerPiles.length; i++) {
+         for (let j = 0; j < allCards.centerPiles[i].length; j++) {
             let pileData = {name : '', suit : 0, value : 0};
-            pileData.name = centerPiles[i][j].getAt(2).name;
-            pileData.suit = centerPiles[i][j].getAt(2).suit;
-            pileData.value = centerPiles[i][j].getAt(2).value;
+            pileData.name = allCards.centerPiles[i][j].getAt(2).name;
+            pileData.suit = allCards.centerPiles[i][j].getAt(2).suit;
+            pileData.value = allCards.centerPiles[i][j].getAt(2).value;
             //pileData.pile = demonPile[0].getData('pile')
             
             centerPilesData[i][j] = pileData;
@@ -495,43 +455,43 @@ class PlaygroundScene extends Phaser.Scene {
       };
 
       // Plus 1s because there are fake continers in the endpiles for the transparent sprites that go on the bottom.
-      for (let i = 0; i < endPiles.length; i++) {
-         for (let j = 0; j < endPiles[i].length; j++) {
+      for (let i = 0; i < allCards.endPiles.length; i++) {
+         for (let j = 0; j < allCards.endPiles[i].length; j++) {
             let pileData = {name : '', suit : 0, value : 0};
-            pileData.name = endPiles[i][j].getAt(2).name;
-            pileData.suit = endPiles[i][j].getAt(2).suit;
-            pileData.value = endPiles[i][j].getAt(2).value;
+            pileData.name = allCards.endPiles[i][j].getAt(2).name;
+            pileData.suit = allCards.endPiles[i][j].getAt(2).suit;
+            pileData.value = allCards.endPiles[i][j].getAt(2).value;
             //pileData.pile = demonPile[0].getData('pile')
 
             endPilesData[i][j] = pileData;
          }
       };
 
-      for (let i = 0; i < drawPile.length; i++) {
+      for (let i = 0; i < allCards.drawPile.length; i++) {
          let pileData = {name : '', suit : 0, value : 0};
-         pileData.name = drawPile[i].getAt(2).name;
-         pileData.suit = drawPile[i].getAt(2).suit;
-         pileData.value = drawPile[i].getAt(2).value;
+         pileData.name = allCards.drawPile[i].getAt(2).name;
+         pileData.suit = allCards.drawPile[i].getAt(2).suit;
+         pileData.value = allCards.drawPile[i].getAt(2).value;
          //pileData.pile = demonPile[0].getData('pile')
 
          drawPileData[i] = pileData;
       };
 
-      for (let i = 0; i < demonPile.length; i++) {
+      for (let i = 0; i < allCards.demonPile.length; i++) {
          let pileData = {name : '', suit : 0, value : 0};
-         pileData.name = demonPile[i].getAt(2).name;
-         pileData.suit = demonPile[i].getAt(2).suit;
-         pileData.value = demonPile[i].getAt(2).value;
+         pileData.name = allCards.demonPile[i].getAt(2).name;
+         pileData.suit = allCards.demonPile[i].getAt(2).suit;
+         pileData.value = allCards.demonPile[i].getAt(2).value;
          //pileData.pile = demonPile[0].getData('pile')
 
          demonPileData[i] = pileData;
       };
 
-      for (let i = 0; i < deckPile.length; i++) {
+      for (let i = 0; i < allCards.deckPile.length; i++) {
          let pileData = {name : '', suit : 0, value : 0};
-         pileData.name = deckPile[i].getAt(2).name;
-         pileData.suit = deckPile[i].getAt(2).suit;
-         pileData.value = deckPile[i].getAt(2).value;
+         pileData.name = allCards.deckPile[i].getAt(2).name;
+         pileData.suit = allCards.deckPile[i].getAt(2).suit;
+         pileData.value = allCards.deckPile[i].getAt(2).value;
          //pileData.pile = demonPile[0].getData('pile')
 
          deckPileData[i] = pileData;
@@ -542,54 +502,79 @@ class PlaygroundScene extends Phaser.Scene {
    }
 
    // Recieves the gamestate sent from the server and updates the client
-   async updatePiles(deck, centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData) {
-      
-      // This is starting to reach functionality
+   updatePiles(allCards, deck, centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData) {
+      //console.log(centerPilesData);
 
       // Clear the existing arrays
-      centerPile1.length = 0;
-      centerPile2.length = 0;
-      centerPile3.length = 0;
-      centerPile4.length = 0;
+      allCards.centerPile1.length = 0;
+      allCards.centerPile2.length = 0;
+      allCards.centerPile3.length = 0;
+      allCards.centerPile4.length = 0;
 
-      endPile1.length = 0;
-      endPile2.length = 0;
-      endPile3.length = 0;
-      endPile4.length = 0;
+      allCards.endPile1.length = 0;
+      allCards.endPile2.length = 0;
+      allCards.endPile3.length = 0;
+      allCards.endPile4.length = 0;
 
-      drawPile.length = 0;
-      demonPile.length = 0;
-      deckPile.length = 0;
-
-      //console.log(centerPilesData);
+      allCards.drawPile.length = 0;
+      allCards.demonPile.length = 0;
+      allCards.deckPile.length = 0;
 
       for (let i = 0; i < centerPilesData.length; i++) {
          for (let j = 0; j < centerPilesData[i].length; j++) {
-            centerPiles[i].push(deck.cards.find(card => card.getAt(2).name === centerPilesData[i][j].name));
+            allCards.centerPiles[i].push(deck.cards.find(card => card.getAt(2).name === centerPilesData[i][j].name));
          }
       }
       for (let i = 0; i < endPilesData.length; i++) {
          for (let j = 0; j < endPilesData[i].length; j++) {
-            endPiles[i].push(deck.cards.find(card => card.getAt(2).name === endPilesData[i][j].name));
+            allCards.endPiles[i].push(deck.cards.find(card => card.getAt(2).name === endPilesData[i][j].name));
          }
       }
       for (let i = 0; i < drawPileData.length; i++) {
-         drawPile.push(deck.cards.find(card => card.getAt(2).name === drawPileData[i].name));
+         allCards.drawPile.push(deck.cards.find(card => card.getAt(2).name === drawPileData[i].name));
       }
       for (let i = 0; i < demonPileData.length; i++) {
-         demonPile.push(deck.cards.find(card => card.getAt(2).name === demonPileData[i].name));
+         allCards.demonPile.push(deck.cards.find(card => card.getAt(2).name === demonPileData[i].name));
       }
       for (let i = 0; i < deckPileData.length; i++) {
-         deckPile.push(deck.cards.find(card => card.getAt(2).name === deckPileData[i].name));
+         allCards.deckPile.push(deck.cards.find(card => card.getAt(2).name === deckPileData[i].name));
       }
 
       //console.log('updating');
       if (this.canRender === true) {
-         this.renderCards();
+         let playerID = allCards.deck.userID;
+         renderCards(this, allCards, playerID, centerPileX, centerPileY, endPileX, endPileY);
       }
-      //this.renderCards();
    }
 
+   // Use to build objects that will store the cards for each player
+   createAllCards(playerID) {
+      let allCards = {
+          centerPiles : [[],[],[],[]],
+          endPiles : [[],[],[],[]],
+  
+          centerPile1 : [],
+          centerPile2 : [],
+          centerPile3 : [],
+          centerPile4 : [],
+  
+          endPile1 : [],
+          endPile2 : [],
+          endPile3 : [],
+          endPile4 : [],
+  
+          drawPile : [],
+          demonPile : [],
+          deckPile : [],
+  
+          deck: new Deck(this, playerID)
+      }
+  
+      allCards.centerPiles = [allCards.centerPile1, allCards.centerPile2, allCards.centerPile3, allCards.centerPile4];
+      allCards.endPiles = [allCards.endPile1, allCards.endPile2, allCards.endPile3, allCards.endPile4];
+  
+      return allCards;
+  }
 
 }
 

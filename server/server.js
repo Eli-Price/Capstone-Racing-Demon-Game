@@ -79,6 +79,8 @@ io.on('connection', (socket) => {
             console.log('User: ' + userID + ', Joining room ' + roomID);
             callback({ success: true });
             socket.join(roomID);
+            console.log(io.sockets.adapter.rooms.get(roomID));
+            console.log(socket.rooms);
             sessionStore.addPlayerToRoom(roomID, userID);
             socket.to(roomID).emit('userJoined', 'A new user has joined the room');
         } else {
@@ -92,11 +94,12 @@ io.on('connection', (socket) => {
         const room = sessionStore.getRoom(roomID);
         const allPlayersCards = room.players.map(playerID => {
             const session = sessionStore.findSession(playerID);
-            console.log(session.allCards);
+            //console.log(session.allCards);
             return session.allCards;
         });
-        console.log(allPlayersCards)
-        socket.emit('recievePiles', userID, allPlayersCards);
+        //console.log(allPlayersCards)
+        // Sends out all piles, and ID of the player sending them
+        socket.to(roomID).emit('recievePiles', userID, allPlayersCards);
         /*socket.emit('recievePiles', socket.allCards.centerPiles, socket.allCards.endPiles, socket.allCards.drawPile, 
                         socket.allCards.demonPile, socket.allCards.deckPile);*/
     });
@@ -108,11 +111,15 @@ io.on('connection', (socket) => {
         const room = sessionStore.getRoom(roomID);
         const allPlayersCards = room.players.map(playerID => {
             const session = sessionStore.findSession(playerID);
-            console.log(session.allCards);
+            //console.log(session.allCards);
             return session.allCards;
         });
-        console.log(allPlayersCards)
-        socket.emit('recievePiles', userID, allPlayersCards);
+        //console.log(allPlayersCards)
+        allPlayersCards.forEach(allCards => {
+            console.log(allCards.deck.userID);
+        });
+        //console.log(userID);
+        socket.to(roomID).emit('recievePiles', userID, allPlayersCards);
         /*socket.emit('recievePiles', socket.allCards.centerPiles, socket.allCards.endPiles, socket.allCards.drawPile, 
                         socket.allCards.demonPile, socket.allCards.deckPile);*/
     });
@@ -121,11 +128,15 @@ io.on('connection', (socket) => {
         const room = sessionStore.getRoom(roomID);
         const allPlayersCards = room.players.map(playerID => {
             const session = sessionStore.findSession(playerID);
-            console.log(session.allCards);
+            //console.log(session.allCards);
             return session.allCards;
         });
-        console.log(allPlayersCards)
-        socket.emit('recievePiles', userID, allPlayersCards);
+        //console.log(allPlayersCards)
+        /*allPlayersCards.forEach(allCards => {
+            console.log(allCards.deck.userID);
+        });*/
+        //console.log('BREAK');
+        socket.to(roomID).emit('recievePiles', userID, allPlayersCards);
         /*socket.emit('recievePiles', socket.allCards.centerPiles, socket.allCards.endPiles, socket.allCards.drawPile, 
                         socket.allCards.demonPile, socket.allCards.deckPile);*/
     });

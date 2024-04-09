@@ -3,9 +3,11 @@ import Card from './card.js';
 
 export class Deck {
    cards = [];
+   userID = 0;
 
-   constructor(scene) {
+   constructor(scene, userID) {
       this.scene = scene;
+      this.userID = userID;
       const suits = ['Hearts', 'Diamonds', 'Clubs', 'Spades'];
       for (let suit = 0; suit < suits.length; suit++) {
          for (let value = 0; value < 13; value++) {
