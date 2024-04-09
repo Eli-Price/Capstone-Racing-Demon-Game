@@ -23,7 +23,7 @@ const io = new Server(server, {
 });
 
 // It doesn't work
-instrument(io, { auth: false });
+//instrument(io, { auth: false });
 
 const sessionStore = new InMemorySessionStore();
 
@@ -143,15 +143,14 @@ io.on('connection', (socket) => {
 });
 
 
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
+
 /*server.listen(3000, () => {
     console.log('listening on localhost:3000');
 });*/
-
-
-const PORT = process.env.PORT;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
 
 function updateCards(allCards, centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData) {
     // This is starting to reach functionality
@@ -228,3 +227,4 @@ function createAllCards(playerId) {
 
     return allCards;
 }
+
