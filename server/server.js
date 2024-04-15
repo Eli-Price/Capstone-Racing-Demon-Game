@@ -109,15 +109,25 @@ io.on('connection', (socket) => {
 
         updateCards(socket.allCards, centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData);
         const room = sessionStore.getRoom(roomID);
+        room.players.forEach(playerID => {
+            // Find the session for the player
+            const session = sessionStore.findSession(playerID);
+    
+            // If the session exists and the session's userID matches the socket's userID
+            if (session && session.userID === socket.userID) {
+                // Update the session's allCards property
+                session.allCards = socket.allCards;
+            }
+        });
         const allPlayersCards = room.players.map(playerID => {
             const session = sessionStore.findSession(playerID);
             //console.log(session.allCards);
             return session.allCards;
         });
         //console.log(allPlayersCards)
-        allPlayersCards.forEach(allCards => {
+        /*allPlayersCards.forEach(allCards => {
             console.log(allCards.deck.userID);
-        });
+        });*/
         //console.log(userID);
         socket.to(roomID).emit('recievePiles', userID, allPlayersCards);
         /*socket.emit('recievePiles', socket.allCards.centerPiles, socket.allCards.endPiles, socket.allCards.drawPile, 
@@ -135,7 +145,6 @@ io.on('connection', (socket) => {
         /*allPlayersCards.forEach(allCards => {
             console.log(allCards.deck.userID);
         });*/
-        //console.log('BREAK');
         socket.to(roomID).emit('recievePiles', userID, allPlayersCards);
         /*socket.emit('recievePiles', socket.allCards.centerPiles, socket.allCards.endPiles, socket.allCards.drawPile, 
                         socket.allCards.demonPile, socket.allCards.deckPile);*/

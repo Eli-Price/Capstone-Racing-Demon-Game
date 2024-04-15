@@ -39,3 +39,15 @@ export const values = (() => {
    }
    return Object.freeze(Object.assign({}, _enum, _reverseEnum));
 })();
+
+// Positions of the piles
+
+export const centerPileX = [315, 405, 495, 585];
+export const centerPileY = 225;
+export const endPileX = [315, 405, 495, 585];
+export const endPileY = 90;
+
+export const centerPileX2 = [420, 540, 660, 780].map(x => x * 0.5);
+export const centerPileY2 = 300 * 0.5;
+export const endPileX2 = [420, 540, 660, 780].map(x => x * 0.5);
+export const endPileY2 = 120 * 0.5;

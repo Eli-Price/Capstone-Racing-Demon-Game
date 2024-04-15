@@ -4,7 +4,10 @@
 <head>
    <meta charset="UTF-8" />
    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-   <title>Phaser 3 Solitaire Test</title>
+
+   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
+   <title>Phaser 3 Solitaire</title>
    <style>
       html,
       body,
@@ -13,15 +16,46 @@
          margin: 0;
          padding: 0;
       }
+
+      /* position the gamescenes */
+      #player1Canvas {
+         position: absolute;
+         top: 0;
+         left: 0;
+      }
+
+      #player2Canvas {
+         position: absolute;
+         top: 000;
+         right: 0;
+      }
    </style>
 </head>
 
 <body style="background-color: dimgray">
-   <div id="game"></div>
-   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+   <div id="player1Scene"></div>
+   <div id="player2Scene"></div>
+   <div id="player3Scene"></div>
+   <div id="player4Scene"></div>
+   <!--<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>-->
    <script src="https://cdn.jsdelivr.net/npm/phaser@v3.80.1/dist/phaser.min.js"></script>
    <script src="../other_scripts/game.js"></script>
    <script src="../game_scripts/main.js" type="module"></script>
 </body>
+
+<style>
+   /* position the gamescenes */
+   #player1Canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+   }
+
+   #player2Canvas {
+      position: absolute;
+      top: 000;
+      right: 0;
+   }
+</style>
 
 </html>

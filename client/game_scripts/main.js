@@ -1,22 +1,31 @@
 //import Phaser, { GameObjects, Textures } from './phaser';
-import Card from './card.js';
+//import Card from './card.js';
 //import crypto from 'crypto';
 import { suits, values} from './card_config.js';
+import { centerPileX, centerPileY, endPileX, endPileY, centerPileX2, centerPileY2, endPileX2, endPileY2 } from './card_config.js';
 import { Deck } from './deck.js';
 import { createDeckBottom } from './deck_bottom.js';
 import { renderCards } from './render.js';
+import { sendPiles, updatePiles, createAllCards, showGameOverPopup } from './card_scripts.js';
 /*import express from 'express';
 import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { Server } from 'socket.io';*/
 
+let gameTimer = 0;
+let timeSinceLastMove = 0;
+let canRender = true;
+let gameOver = false;
+let decks = [];
+let playerIDs = [];
 
 const roomID = localStorage.getItem('roomID');
 const userID = localStorage.getItem('userID');
+playerIDs.push(userID);
 console.log(roomID);
 
-const socket = io({
+export const socket = io({
    auth: { 
       userID: localStorage.getItem('userID'),
       roomID: localStorage.getItem('roomID')
@@ -39,49 +48,33 @@ socket.on('connect', () => {
         // If the server responded with an error, display the error message
         const errorMessage = document.createElement('p');
         errorMessage.textContent = response.message;
-        //document.querySelector('.input-field').appendChild(errorMessage);
+        document.querySelector('.input-field').appendChild(errorMessage);
       }
    });
 });
 
+socket.on('userJoined', (message) => {
+   console.log(message);
+});
 
-// Positions of the centerPiles
-const centerPileX = [420, 540, 660, 780];
-const centerPileY = 300;
-const endPileX = [420, 540, 660, 780];
-const endPileY = 120;
+// When any outbout event occurs, sets time since last update to 0
+/*socket.onAnyOutgoing(() => {
+   timeSinceLastMove = 0;
+});*/
+
+
+// Create multiple scenes with cameras rotated for each player, move socket methods out of the scene.add
+//   and the variables in the scene moved outside, unless I want it to be unoptimized as fuck.
+//   
 
 let deckBottom = [];
 
-/*// Create arrays to store the cards in each center pile
-let centerPile1 = [];
-let centerPile2 = [];
-let centerPile3 = [];
-let centerPile4 = [];
-
-// Create arrays to store the cards in each center pile
-let endPile1 = [];
-let endPile2 = [];
-let endPile3 = [];
-let endPile4 = [];
-
-// Create arrays to store the piles
-const centerPiles = [centerPile1, centerPile2, centerPile3, centerPile4];
-const endPiles = [endPile1, endPile2, endPile3, endPile4];
-const drawPile = [];
-const demonPile = [];
-const deckPile = [];*/
-
-class PlaygroundScene extends Phaser.Scene {
+class Player1Scene extends Phaser.Scene {
    constructor() {
-      super('playground');
+      super('Player1Scene');
       this.mousePositionText = null;
       this.demonPileCount = null;
       this.deckPileCount = null;
-      this.gameTimer = 0;
-      this.timeSinceLastMove = 0;
-      this.canRender = true;
-      this.decks = [];
    }
 
    preload() {
@@ -118,104 +111,136 @@ class PlaygroundScene extends Phaser.Scene {
    }
 
    create() {
+      this.scene.launch('Player2Scene');
+      this.scene.launch('Player3Scene');
+      this.scene.launch('Player4Scene');
+
+      //console.log(this.scene.manager.scenes);
+
       this.cameras.main.setBackgroundColor('#408080');
+      this.cameras.main.setViewport(0, 0, 650, 450);
+
       createDeckBottom(this);
 
-      this.mousePositionText = this.add.text(10, 10, '', { font: '16px Courier', fill: '#ffffff' });
-      this.demonPileCount = this.add.text(220, 215, '', { font: '16px Courier', fill: '#ffffff' });
-      this.deckPileCount = this.add.text(92, 40, '', { font: '16px Courier', fill: '#ffffff' });
+      this.mousePositionText = this.add.text(5, 5, '', { font: '16px Courier', fill: '#ffffff' });
+      this.demonPileCount = this.add.text(165, 161, '', { font: '16px Courier', fill: '#ffffff' });
+      this.deckPileCount = this.add.text(69, 30, '', { font: '16px Courier', fill: '#ffffff' });
 
       // Draw the places cards can be placed
       for (let i = 0; i < centerPileX.length; i++) {
-         deckBottom.push(this.add.sprite(centerPileX[i], centerPileY - 180, 'cards' + suits[i], 0).setTint(0x408080));
+         deckBottom.push(this.add.sprite(centerPileX[i], centerPileY - 135, 'cards' + suits[i], 0).setTint(0x408080));
          deckBottom[i].setDepth(0);
       }
       for (let i = 0; i < centerPileX.length; i++) {
          deckBottom.push(this.add.sprite(centerPileX[i], centerPileY, 'deckBottomTexture'));
       }
-      deckBottom.push(this.add.sprite(100, endPileY, 'deckBottomTexture'));
-      deckBottom.push(this.add.sprite(230, endPileY, 'deckBottomTexture'));
-      deckBottom.push(this.add.sprite(230, centerPileY, 'deckBottomTexture'));
+      deckBottom.push(this.add.sprite(75, endPileY, 'deckBottomTexture'));
+      deckBottom.push(this.add.sprite(172, endPileY, 'deckBottomTexture'));
+      deckBottom.push(this.add.sprite(172, centerPileY, 'deckBottomTexture'));
 
-      let deckSprite = this.add.sprite(100, 128, 'cardsDecks', 1);
+      let deckSprite = this.add.sprite(75, 95, 'cardsDecks', 1);
       deckSprite.setInteractive();
       //deckSprite.setScale(0.5);
 
-      // Draw the places cards can be placed again 500px lower
-      for (let i = 0; i < centerPileX.length; i++) {
-         deckBottom[i] = this.add.sprite(centerPileX[i], centerPileY - 180 + 400, 'cards' + suits[i], 0).setTint(0x408080);
-         deckBottom[i].setDepth(0);
-      }
-      for (let i = 0; i < centerPileX.length; i++) {
-         deckBottom[i + 4] = this.add.sprite(centerPileX[i], centerPileY + 400, 'deckBottomTexture');
-      }
-      deckBottom[8] = this.add.sprite(100, endPileY + 400, 'deckBottomTexture');
-      deckBottom[8] = this.add.sprite(230, endPileY + 400, 'deckBottomTexture');
-      deckBottom[8] = this.add.sprite(230, centerPileY + 400, 'deckBottomTexture');
-
-      let deck2Sprite = this.add.sprite(100, 128 + 400, 'cardsDecks', 1);
-      deck2Sprite.setInteractive();
-
       
+      this.children.each(child => {
+         if (typeof child.setScale === 'function') {
+           child.setScale(0.75);
+         }
+      });
+      
+
+      // Deal the cards, is here for the player scene only
       socket.emit('dealCards', userID);
       /*setTimeout(() => {
          renderCards(this);
       }, 500);*/
 
 
-      socket.on('userJoined', (message) => {
-         console.log(message);
-      });
-
-      
       socket.on('recievePiles', (userID, allPlayersCards) => {
          //console.log(userID);
-         console.log(allPlayersCards);
-
+         //console.log(allPlayersCards);
+      
          allPlayersCards.forEach(allCards => {
-            let foundDeck = this.decks.find(aDeck => aDeck.deck.userID === allCards.deck.userID);
-            //console.log(this.decks.find(theseCards => theseCards.deck.userID === userID));
+            let foundDeck = decks.find(aDeck => aDeck.deck.userID === allCards.deck.userID);
+            //console.log(decks.find(theseCards => theseCards.deck.userID === userID));
             //console.log(allCards.deck.userID);
+            //console.log(playerIDs.length);
             if (!foundDeck) {
-               let newDeck = this.createAllCards(allCards.deck.userID);
-               this.decks.push(newDeck);
+               if (playerIDs[0] !== allCards.deck.userID) {
+                  playerIDs.push(allCards.deck.userID);
+               }
+            }
+            if (allCards.demonPile.length === 0) {
+               gameOver = true;
             }
          });
-         console.log(this.decks);
 
-         // get the data of all the players,
-         allPlayersCards.forEach(allCards => {
-            let foundDeck = this.decks.find(aDeck => aDeck.deck.userID === allCards.deck.userID);
+         playerIDs.forEach(playerID => {
+            let allCards = allPlayersCards.find(cards => cards.deck.userID === playerID);
+            if (!allCards) {
+              console.error(`No cards found for user ID: ${playerID}`);
+              return;
+            }
+          
+            let foundDeck = decks.find(aDeck => aDeck.deck.userID === allCards.deck.userID);
+            if (!foundDeck) {
+              let scene = this.scene.manager.scenes[playerIDs.indexOf(playerID)];
+              let newDeck = createAllCards(scene, allCards.deck.userID);
+              decks.push(newDeck);
+            }
+          
+            if (allCards.demonPile.length === 0) {
+              gameOver = true;
+            }
+          });
+         
+         //console.log(decks);
 
+
+         playerIDs.forEach(playerID => {
+            let allCards = allPlayersCards.find(cards => cards.deck.userID === playerID);
+            if (!allCards) {
+              console.error(`No cards found for user ID: ${playerID}`);
+              return;
+            }
+          
+            let foundDeck = decks.find(aDeck => aDeck.deck.userID === allCards.deck.userID);
+            //console.log(foundDeck);
             let centerPilesData = allCards.centerPiles;
             let endPilesData = allCards.endPiles;
             let drawPileData = allCards.drawPile;
             let demonPileData = allCards.demonPile;
             let deckPileData = allCards.deckPile;
-            console.log(foundDeck);
-
-            this.updatePiles(foundDeck, foundDeck.deck, centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData);
-         });
-
-         this.decks.forEach(allCards => {
-            //console.log(allCards.deck.userID);
-            //let foundDeck = allPlayersCards.find(allCards => allCards.deck.userID === userID);
-            //renderCards(this, allCards, allCards.deck.userID, centerPileX, centerPileY, endPileX, endPileY);
-         });
-
-      });
-
+          
+            let playerIndex = playerIDs.indexOf(foundDeck.deck.userID);
+            //console.log(playerIndex);
+            if (playerIndex !== -1) {
+              let scene = this.scene.manager.scenes[playerIndex];
+              //console.log(scene);
+              updatePiles(scene, foundDeck, foundDeck.deck, centerPilesData, endPilesData, drawPileData, 
+                  demonPileData, deckPileData, canRender);
+            } else {
+              console.error(`No scene found for user ID: ${userID}`);
+            }
+            //console.log(decks);
+          });
       
-
-      // When any outbout event occurs, sets time since last update to 0
-      socket.onAnyOutgoing(() => {
-         this.timeSinceLastMove = 0;
+         if (gameOver) {
+            // Make all items uninteractable
+            this.input.enabled = false;
+      
+            // Show a game over message
+            showGameOverPopup();
+         }
+      
       });
+
 
       // Functions happen on clicking on deck, should be converted to an event listener
       this.input.on('pointerdown', (_pointer) => {
-         let allCards = this.decks.find(allCards => allCards.deck.userID === userID);
-         console.log(this.decks);
+         let allCards = decks.find(allCards => allCards.deck.userID === userID);
+         console.log(decks);
          console.log(userID);
          // Dupe code on variable declarations, probably could be cleaned up to be nicer
          // These nested ifs look like trash, should be cleaned up soon
@@ -235,13 +260,14 @@ class PlaygroundScene extends Phaser.Scene {
                   //card.getAt(0).setInteractive(false);
                }
             }
-            this.sendPiles(allCards);
+            console.log(allCards);
+            sendPiles(allCards);
             renderCards(this, allCards, userID, centerPileX, centerPileY, endPileX, endPileY);
          }
       });
 
       this.input.on('drag', (_pointer, container, dragX, dragY) => {
-         let allCards = this.decks.find(allCards => allCards.deck.userID === userID);
+         let allCards = decks.find(allCards => allCards.deck.userID === userID);
 
          container.setData({x: container.x, y: container.y});
          container.x = dragX;
@@ -253,7 +279,7 @@ class PlaygroundScene extends Phaser.Scene {
                let card = pile[i];
                if (card.getAt(2).value <= container.getAt(2).value) {
                   card.x = container.x;
-                  card.y = container.y + (20 * (i - containerIndex));
+                  card.y = container.y + (15 * (i - containerIndex));
                   card.depth = container.depth + i; // Dont need the 1 but changing it might break things
                }
             }
@@ -261,8 +287,8 @@ class PlaygroundScene extends Phaser.Scene {
       });
       
       this.input.on('dragstart', (_pointer, container) => {
-         let allCards = this.decks.find(allCards => allCards.deck.userID === userID);
-         this.canRender = false;
+         let allCards = decks.find(allCards => allCards.deck.userID === userID);
+         canRender = false;
 
          console.log(container.getAt(2).name)
 
@@ -283,20 +309,18 @@ class PlaygroundScene extends Phaser.Scene {
       //   will be doing a lot of the work here, or probably checking the work before allowing it to happen
       this.input.on('dragend', (_pointer, container) => {
          // Find your own allCards object in decks to use
-         let allCards = this.decks.find(allCards => allCards.deck.userID === userID);
+         let allCards = decks.find(allCards => allCards.deck.userID === userID);
          console.log(allCards);
 
-         this.canRender = true;
+         canRender = true;
 
          var mouseX = this.input.mousePointer.x;
          var mouseY = this.input.mousePointer.y;
-         //console.log('testing');
          for (let i = 0; i < centerPileX.length; i++) {
             // Y Position modifiers are for the height of the pile
             if (mouseX >= centerPileX[i] - 44 && mouseX <= centerPileX[i] + 44 &&
                   mouseY >= centerPileY + ((allCards.centerPiles[i].length - 1) * 20) - 62 && 
                   mouseY <= centerPileY + ((allCards.centerPiles[i].length - 1) * 20) + 62) {
-               // console.log("CenterPile length: " + centerPiles[i].length)
                if (this.canAddToCenterPile(container, allCards.centerPiles[i][allCards.centerPiles[i].length - 1], allCards)) {
                   // Remove the card from its original pile
                   let originalPile = container.getData('pile');
@@ -305,8 +329,6 @@ class PlaygroundScene extends Phaser.Scene {
                      let cardsToMove = originalPile.splice(index);
                      allCards.centerPiles[i].push(...cardsToMove);
                   }
-                  //this.renderCards();
-                  //console.log('testing');
                   break;
                }
                // Store a reference to the new pile in the card
@@ -315,10 +337,8 @@ class PlaygroundScene extends Phaser.Scene {
             } else if (mouseX >= endPileX[i] - 44 && mouseX <= endPileX[i] + 44 &&
                mouseY >= endPileY - 62 && mouseY <= endPileY + 62) {
                for (let i = 0; i < allCards.endPiles.length; i++) {
-                  //console.log(this.canPlaceOnEndPile(container, endPiles[i], i));
                   if (this.canPlaceOnEndPile(container, allCards.endPiles[i], i)) {
                      for (let j = 0; j < allCards.endPiles[i].length + 1; j++) {
-                        //console.log(this.canPlaceOnEndPile(container, endPiles[i], i));
                         // Remove the card from its original pile
                         let originalPile = container.getData('pile');
                         let index = originalPile.indexOf(container);
@@ -336,38 +356,49 @@ class PlaygroundScene extends Phaser.Scene {
                }
             }
          }
-         this.sendPiles(allCards);
-         //updatePiles(deck, centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData);
+         sendPiles(allCards);
 
          renderCards(this, allCards, allCards.deck.userID, centerPileX, centerPileY, endPileX, endPileY);
       });
    }
 
    update() {
+      let allCards = decks[0];
+
       var mouseX = this.input.mousePointer.x;
       var mouseY = this.input.mousePointer.y;
       mouseX = mouseX | 0;
       mouseY = mouseY | 0;
       this.mousePositionText.setText(`Mouse Position: (${mouseX}, ${mouseY})`);
-      //this.demonPileCount.setText(`${demonPile.length}`);
-      //this.deckPileCount.setText(`${deckPile.length}`);
-      //this.renderCards();
+      if (allCards !== undefined) {
+         this.demonPileCount.setText(`${allCards.demonPile.length}`);
+         this.deckPileCount.setText(`${allCards.deckPile.length}`);
+      }
 
-      this.timeSinceLastMove++;
-      if ((this.timeSinceLastMove % 300) === 0) { // Using 300 because higher tickrate is annoying, lower it later to 30
+      if (this.playerID == null) {
+         this.playerID = playerIDs[0];
+      }
+      //console.log(this);
+      //console.log(this.playerID);
+
+      timeSinceLastMove++;
+      if ((timeSinceLastMove % 300) === 0) { // Using 300 because higher tickrate is annoying, lower it later to 30
          socket.emit('returnPiles');  // Fetches gamestate from server after 6 seconds of inactivity
-         console.log("Test");
-         if (this.canRender === true) {
-            //console.log(this.decks.length);
-            this.decks.forEach(allCards => {
+         console.log("Test1");
+         if (canRender === true && decks[0] !== undefined) {
+            console.log(decks[0]);
+            //console.log(playerIDs);
+            
+            //decks.forEach(allCards => {
                console.log(allCards.deck.userID);
                renderCards(this, allCards, allCards.deck.userID, centerPileX, centerPileY, endPileX, endPileY);
-           });
+           //});
         }
       }
+
    }
 
-   
+
 
    canPlaceOnEndPile(container, pile, pileIndex) {
       // Check if the suit of the card matches the suit of the pile
@@ -430,168 +461,357 @@ class PlaygroundScene extends Phaser.Scene {
   
       // If the card passed both checks, it can be added to the pile
       return true;
-  }
-
-   // Sends the users gamestate to the server
-   sendPiles(allCards) {
-      console.log(allCards.centerPiles);
-      let centerPilesData = [[],[],[],[]];
-      let endPilesData = [[],[],[],[]];
-      let drawPileData = [];
-      let demonPileData = [];
-      let deckPileData = [];
-
-      for (let i = 0; i < allCards.centerPiles.length; i++) {
-         for (let j = 0; j < allCards.centerPiles[i].length; j++) {
-            let pileData = {name : '', suit : 0, value : 0};
-            pileData.name = allCards.centerPiles[i][j].getAt(2).name;
-            pileData.suit = allCards.centerPiles[i][j].getAt(2).suit;
-            pileData.value = allCards.centerPiles[i][j].getAt(2).value;
-            //pileData.pile = demonPile[0].getData('pile')
-            
-            centerPilesData[i][j] = pileData;
-            //console.log(centerPilesData[i][j]);
-         }
-      };
-
-      // Plus 1s because there are fake continers in the endpiles for the transparent sprites that go on the bottom.
-      for (let i = 0; i < allCards.endPiles.length; i++) {
-         for (let j = 0; j < allCards.endPiles[i].length; j++) {
-            let pileData = {name : '', suit : 0, value : 0};
-            pileData.name = allCards.endPiles[i][j].getAt(2).name;
-            pileData.suit = allCards.endPiles[i][j].getAt(2).suit;
-            pileData.value = allCards.endPiles[i][j].getAt(2).value;
-            //pileData.pile = demonPile[0].getData('pile')
-
-            endPilesData[i][j] = pileData;
-         }
-      };
-
-      for (let i = 0; i < allCards.drawPile.length; i++) {
-         let pileData = {name : '', suit : 0, value : 0};
-         pileData.name = allCards.drawPile[i].getAt(2).name;
-         pileData.suit = allCards.drawPile[i].getAt(2).suit;
-         pileData.value = allCards.drawPile[i].getAt(2).value;
-         //pileData.pile = demonPile[0].getData('pile')
-
-         drawPileData[i] = pileData;
-      };
-
-      for (let i = 0; i < allCards.demonPile.length; i++) {
-         let pileData = {name : '', suit : 0, value : 0};
-         pileData.name = allCards.demonPile[i].getAt(2).name;
-         pileData.suit = allCards.demonPile[i].getAt(2).suit;
-         pileData.value = allCards.demonPile[i].getAt(2).value;
-         //pileData.pile = demonPile[0].getData('pile')
-
-         demonPileData[i] = pileData;
-      };
-
-      for (let i = 0; i < allCards.deckPile.length; i++) {
-         let pileData = {name : '', suit : 0, value : 0};
-         pileData.name = allCards.deckPile[i].getAt(2).name;
-         pileData.suit = allCards.deckPile[i].getAt(2).suit;
-         pileData.value = allCards.deckPile[i].getAt(2).value;
-         //pileData.pile = demonPile[0].getData('pile')
-
-         deckPileData[i] = pileData;
-      };
-
-      socket.emit('sendPiles', centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData);
-      //console.log("Test2")
    }
 
-   // Recieves the gamestate sent from the server and updates the client
-   updatePiles(allCards, deck, centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData) {
-      //console.log(centerPilesData);
 
-      // Clear the existing arrays
-      allCards.centerPile1.length = 0;
-      allCards.centerPile2.length = 0;
-      allCards.centerPile3.length = 0;
-      allCards.centerPile4.length = 0;
+}
 
-      allCards.endPile1.length = 0;
-      allCards.endPile2.length = 0;
-      allCards.endPile3.length = 0;
-      allCards.endPile4.length = 0;
 
-      allCards.drawPile.length = 0;
-      allCards.demonPile.length = 0;
-      allCards.deckPile.length = 0;
 
-      for (let i = 0; i < centerPilesData.length; i++) {
-         for (let j = 0; j < centerPilesData[i].length; j++) {
-            allCards.centerPiles[i].push(deck.cards.find(card => card.getAt(2).name === centerPilesData[i][j].name));
-         }
-      }
-      for (let i = 0; i < endPilesData.length; i++) {
-         for (let j = 0; j < endPilesData[i].length; j++) {
-            allCards.endPiles[i].push(deck.cards.find(card => card.getAt(2).name === endPilesData[i][j].name));
-         }
-      }
-      for (let i = 0; i < drawPileData.length; i++) {
-         allCards.drawPile.push(deck.cards.find(card => card.getAt(2).name === drawPileData[i].name));
-      }
-      for (let i = 0; i < demonPileData.length; i++) {
-         allCards.demonPile.push(deck.cards.find(card => card.getAt(2).name === demonPileData[i].name));
-      }
-      for (let i = 0; i < deckPileData.length; i++) {
-         allCards.deckPile.push(deck.cards.find(card => card.getAt(2).name === deckPileData[i].name));
-      }
-
-      //console.log('updating');
-      if (this.canRender === true) {
-         let playerID = allCards.deck.userID;
-         renderCards(this, allCards, playerID, centerPileX, centerPileY, endPileX, endPileY);
-      }
+class Player2Scene extends Phaser.Scene {
+   constructor() {
+      super('Player2Scene');
+      this.mousePositionText = null;
+      this.demonPileCount = null;
+      this.deckPileCount = null;
+      this.playerID = null;
    }
 
-   // Use to build objects that will store the cards for each player
-   createAllCards(playerID) {
-      let allCards = {
-          centerPiles : [[],[],[],[]],
-          endPiles : [[],[],[],[]],
-  
-          centerPile1 : [],
-          centerPile2 : [],
-          centerPile3 : [],
-          centerPile4 : [],
-  
-          endPile1 : [],
-          endPile2 : [],
-          endPile3 : [],
-          endPile4 : [],
-  
-          drawPile : [],
-          demonPile : [],
-          deckPile : [],
-  
-          deck: new Deck(this, playerID)
-      }
-  
-      allCards.centerPiles = [allCards.centerPile1, allCards.centerPile2, allCards.centerPile3, allCards.centerPile4];
-      allCards.endPiles = [allCards.endPile1, allCards.endPile2, allCards.endPile3, allCards.endPile4];
-  
-      return allCards;
-  }
+   preload() {
+      
+   }
 
+   create() {
+      this.cameras.main.setBackgroundColor('#408080');
+      this.cameras.main.setViewport(0, 450, 450, 300);
+
+      createDeckBottom(this);
+
+      this.mousePositionText = this.add.text(5, 5, '', { font: '16px Courier', fill: '#ffffff' });
+      this.demonPileCount = this.add.text(110, 107, '', { font: '16px Courier', fill: '#ffffff' });
+      this.deckPileCount = this.add.text(46, 20, '', { font: '16px Courier', fill: '#ffffff' });
+
+      // Draw the places cards can be placed
+      for (let i = 0; i < centerPileX2.length; i++) {
+         deckBottom.push(this.add.sprite(centerPileX2[i], centerPileY2 - 90, 'cards' + suits[i], 0).setTint(0x408080));
+         deckBottom[i].setDepth(0);
+      }
+      for (let i = 0; i < centerPileX2.length; i++) {
+         deckBottom.push(this.add.sprite(centerPileX2[i], centerPileY2, 'deckBottomTexture'));
+      }
+      deckBottom.push(this.add.sprite(50, endPileY2, 'deckBottomTexture'));
+      deckBottom.push(this.add.sprite(115, endPileY2, 'deckBottomTexture'));
+      deckBottom.push(this.add.sprite(115, centerPileY2, 'deckBottomTexture'));
+
+      let deckSprite = this.add.sprite(50, 63, 'cardsDecks', 1);
+      deckSprite.setInteractive();
+      //deckSprite.setScale(0.75);
+
+      this.children.each(child => {
+         if (typeof child.setScale === 'function') {
+           child.setScale(0.5);
+         }
+      });
+      
+
+   }
+
+   update() {
+      let allCards = decks[1];
+
+      var mouseX = this.input.mousePointer.x;
+      var mouseY = this.input.mousePointer.y;
+      mouseX = mouseX | 0;
+      mouseY = mouseY | 0;
+      this.mousePositionText.setText(`Mouse Position: (${mouseX}, ${mouseY})`);
+      if (allCards !== undefined) {
+         this.demonPileCount.setText(`${allCards.demonPile.length}`);
+         this.deckPileCount.setText(`${allCards.deckPile.length}`);
+      }
+      
+      if (this.playerID == null) {
+         this.playerID = playerIDs[1];
+      }
+      //console.log(this);
+
+      //timeSinceLastMove++;
+      if ((timeSinceLastMove % 300) === 0) { // Using 300 because higher tickrate is annoying, lower it later to 30
+         //socket.emit('returnPiles');  // Fetches gamestate from server after 6 seconds of inactivity
+         //console.log("Test2");
+         //console.log(decks);
+         if (canRender === true && decks[1] !== undefined) {
+            console.log(decks);
+            console.log(playerIDs);
+            let allCards = decks[1];
+            //decks.forEach(allCards => {
+               console.log(allCards.deck.userID);
+               renderCards(this, allCards, allCards.deck.userID, centerPileX2, centerPileY2, endPileX2, endPileY2);
+           //});
+        }
+      }
+
+   }
+
+}
+
+
+class Player3Scene extends Phaser.Scene {
+   constructor() {
+      super('Player3Scene');
+      this.mousePositionText = null;
+      this.demonPileCount = null;
+      this.deckPileCount = null;
+      this.playerID = null;
+   }
+
+   preload() {
+
+   }
+
+   create() {
+      this.cameras.main.setBackgroundColor('#408080');
+      this.cameras.main.setViewport(0, 750, 450, 300);
+
+      createDeckBottom(this);
+
+      this.mousePositionText = this.add.text(5, 5, '', { font: '16px Courier', fill: '#ffffff' });
+      this.demonPileCount = this.add.text(110, 107, '', { font: '16px Courier', fill: '#ffffff' });
+      this.deckPileCount = this.add.text(46, 20, '', { font: '16px Courier', fill: '#ffffff' });
+
+      // Draw the places cards can be placed
+      for (let i = 0; i < centerPileX2.length; i++) {
+         deckBottom.push(this.add.sprite(centerPileX2[i], centerPileY2 - 90, 'cards' + suits[i], 0).setTint(0x408080));
+         deckBottom[i].setDepth(0);
+      }
+      for (let i = 0; i < centerPileX2.length; i++) {
+         deckBottom.push(this.add.sprite(centerPileX2[i], centerPileY2, 'deckBottomTexture'));
+      }
+      deckBottom.push(this.add.sprite(50, endPileY2, 'deckBottomTexture'));
+      deckBottom.push(this.add.sprite(115, endPileY2, 'deckBottomTexture'));
+      deckBottom.push(this.add.sprite(115, centerPileY2, 'deckBottomTexture'));
+
+      let deckSprite = this.add.sprite(50, 63, 'cardsDecks', 1);
+      deckSprite.setInteractive();
+      //deckSprite.setScale(0.75);
+
+      this.children.each(child => {
+         if (typeof child.setScale === 'function') {
+           child.setScale(0.5);
+         }
+      });
+      
+
+   }
+
+   update() {
+      let allCards = decks[2];
+
+      var mouseX = this.input.mousePointer.x;
+      var mouseY = this.input.mousePointer.y;
+      mouseX = mouseX | 0;
+      mouseY = mouseY | 0;
+      this.mousePositionText.setText(`Mouse Position: (${mouseX}, ${mouseY})`);
+      if (allCards !== undefined) {
+         this.demonPileCount.setText(`${allCards.demonPile.length}`);
+         this.deckPileCount.setText(`${allCards.deckPile.length}`);
+      }
+      
+      if (this.playerID == null) {
+         this.playerID = playerIDs[2];
+      }
+
+      //timeSinceLastMove++;
+      if ((timeSinceLastMove % 300) === 0) { // Using 300 because higher tickrate is annoying, lower it later to 30
+         //socket.emit('returnPiles');  // Fetches gamestate from server after 6 seconds of inactivity
+         //console.log("Test3");
+         if (canRender === true && decks[2] !== undefined) {
+            //console.log(decks);
+            //console.log(playerIDs);
+            //let allCards = decks[2];
+            //decks.forEach(allCards => {
+               console.log(allCards.deck.userID);
+               renderCards(this, allCards, allCards.deck.userID, centerPileX2, centerPileY2, endPileX2, endPileY2);
+           //});
+        }
+      }
+
+   }
+
+}
+
+
+class Player4Scene extends Phaser.Scene {
+   constructor() {
+      super('Player4Scene');
+      this.mousePositionText = null;
+      this.demonPileCount = null;
+      this.deckPileCount = null;
+      this.playerID = null;
+   }
+
+   preload() {
+
+   }
+
+   create() {
+      this.cameras.main.setBackgroundColor('#408080');
+      this.cameras.main.setViewport(0, 1050, 450, 300);
+
+      createDeckBottom(this);
+
+      this.mousePositionText = this.add.text(5, 5, '', { font: '16px Courier', fill: '#ffffff' });
+      this.demonPileCount = this.add.text(110, 107, '', { font: '16px Courier', fill: '#ffffff' });
+      this.deckPileCount = this.add.text(46, 20, '', { font: '16px Courier', fill: '#ffffff' });
+
+      // Draw the places cards can be placed
+      for (let i = 0; i < centerPileX2.length; i++) {
+         deckBottom.push(this.add.sprite(centerPileX2[i], centerPileY2 - 90, 'cards' + suits[i], 0).setTint(0x408080));
+         deckBottom[i].setDepth(0);
+      }
+      for (let i = 0; i < centerPileX2.length; i++) {
+         deckBottom.push(this.add.sprite(centerPileX2[i], centerPileY2, 'deckBottomTexture'));
+      }
+      deckBottom.push(this.add.sprite(50, endPileY2, 'deckBottomTexture'));
+      deckBottom.push(this.add.sprite(115, endPileY2, 'deckBottomTexture'));
+      deckBottom.push(this.add.sprite(115, centerPileY2, 'deckBottomTexture'));
+
+      let deckSprite = this.add.sprite(50, 63, 'cardsDecks', 1);
+      deckSprite.setInteractive();
+      //deckSprite.setScale(0.75);
+
+      this.children.each(child => {
+         if (typeof child.setScale === 'function') {
+           child.setScale(0.5);
+         }
+      });
+      
+
+   }
+
+   update() {
+      let allCards = decks[3];
+
+      var mouseX = this.input.mousePointer.x;
+      var mouseY = this.input.mousePointer.y;
+      mouseX = mouseX | 0;
+      mouseY = mouseY | 0;
+      this.mousePositionText.setText(`Mouse Position: (${mouseX}, ${mouseY})`);
+      if (allCards !== undefined) {
+         this.demonPileCount.setText(`${allCards.demonPile.length}`);
+         this.deckPileCount.setText(`${allCards.deckPile.length}`);
+      }
+      
+      if (this.playerID == null) {
+         this.playerID = playerIDs[3];
+      }
+
+      //timeSinceLastMove++;
+      if ((timeSinceLastMove % 300) === 0) { // Using 300 because higher tickrate is annoying, lower it later to 30
+         //socket.emit('returnPiles');  // Fetches gamestate from server after 6 seconds of inactivity
+         //console.log("Test4");
+         //console.log(userID);
+         if (canRender === true && decks[3] !== undefined) {
+            //console.log(decks);
+            //console.log(playerIDs);
+            //let allCards = decks[3];
+            //decks.forEach(allCards => {
+               console.log(allCards.deck.userID);
+               renderCards(this, allCards, allCards.deck.userID, centerPileX2, centerPileY2, endPileX2, endPileY2);
+           //});
+         }
+      }
+
+   }
 }
 
 //const randomId = () => crypto.randomBytes(8).toString("hex");
 
-
-const config = {
+/*
+const player1Config = {
    type: Phaser.AUTO,
-   scene: [PlaygroundScene],
+   scene: [Player1Scene],
+   parent: 'player1Scene',
    scale: {
-      parent: 'game',
       width: 900,//1500,
       height: 900,//1023,
       mode: Phaser.Scale.NONE,
-      autoCenter: Phaser.Scale.CENTER_BOTH,
+      //autoCenter: Phaser.Scale.CENTER_BOTH,
    },
    mipmapFilter: 'LINEAR_MIPMAP_NEAREST',
 };
 
-export default new Phaser.Game(config);
+const player2Config = {
+   type: Phaser.AUTO,
+   scene: [Player2Scene],
+   parent: 'player2Scene',
+   scale: {
+      width: 900,//1500,
+      height: 450,//1023,
+      mode: Phaser.Scale.NONE,
+      //autoCenter: Phaser.Scale.CENTER_BOTH,
+   },
+   mipmapFilter: 'LINEAR_MIPMAP_NEAREST',
+};
+
+const player3Config = {
+   type: Phaser.AUTO,
+   scene: [Player3Scene],
+   parent: 'player3Scene',
+   scale: {
+      width: 900,//1500,
+      height: 450,//1023,
+      mode: Phaser.Scale.NONE,
+      //autoCenter: Phaser.Scale.CENTER_BOTH,
+   },
+   mipmapFilter: 'LINEAR_MIPMAP_NEAREST',
+};
+
+const player4Config = {
+   type: Phaser.AUTO,
+   scene: [Player4Scene],
+   parent: 'player4Scene',
+   scale: {
+      width: 900,//1500,
+      height: 450,//1023,
+      mode: Phaser.Scale.NONE,
+      //autoCenter: Phaser.Scale.CENTER_BOTH,
+   },
+   mipmapFilter: 'LINEAR_MIPMAP_NEAREST',
+};
+*/
+
+const config = {
+   type: Phaser.AUTO,
+   scene: [Player1Scene, Player2Scene, Player3Scene, Player4Scene],
+   parent: 'game',
+   scale: {
+      width: 1200,//1500,
+      height: 1450,//1023,
+      mode: Phaser.Scale.NONE,
+      //autoCenter: Phaser.Scale.CENTER_BOTH,
+   },
+   mipmapFilter: 'LINEAR_MIPMAP_NEAREST',
+};
+
+
+
+export const game = new Phaser.Game(config);
+
+//const scene1 = new Phaser.Scene(player1Config);
+//const scene2 = new Phaser.Scene(player2Config);
+//const scene3 = new Phaser.Scene(player3Config);
+//const scene4 = new Phaser.Scene(player4Config);
+
+/*
+//game.scene.start('Player1Scene');
+game.scene.launch('Player2Scene');
+game.scene.launch('Player3Scene');
+game.scene.launch('Player4Scene');
+*/
+
+/*game.scene.add('Player1Scene', Player1Scene, true);
+game.scene.add('Player2Scene', Player2Scene, true);
+game.scene.add('Player3Scene', Player3Scene, true);
+game.scene.add('Player4Scene', Player4Scene, true);*/
+
+
