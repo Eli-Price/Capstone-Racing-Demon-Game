@@ -1,6 +1,6 @@
 // Scripts for updating the gamestate and communicating with the server
 import { Deck } from './deck.js';
-import { renderCards } from './render.js';
+import { renderCards, renderEndCards } from './render.js';
 import { socket } from './main.js';
 import { centerPileX, centerPileY, endPileX, endPileY } from './card_config.js';
 
@@ -114,6 +114,7 @@ export function updatePiles(scene, allCards, deck, centerPilesData, endPilesData
   if (canRender === true) {
     //let playerID = allCards.deck.userID;
     //renderCards(scene, allCards, scene.playerID, centerPileX, centerPileY, endPileX, endPileY);
+    //renderEndCards(this, this.decks, endPileX, endPileY);
   }
 }
 

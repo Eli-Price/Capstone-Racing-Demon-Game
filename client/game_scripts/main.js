@@ -5,7 +5,7 @@ import { suits, values} from './card_config.js';
 import { centerPileX, centerPileY, endPileX, endPileY, centerPileX2, centerPileY2, endPileX2, endPileY2 } from './card_config.js';
 import { Deck } from './deck.js';
 import { createDeckBottom } from './deck_bottom.js';
-import { renderCards } from './render.js';
+import { renderCards, renderEndCards } from './render.js';
 import { sendPiles, updatePiles, createAllCards, showGameOverPopup } from './card_scripts.js';
 /*import express from 'express';
 import { createServer } from 'node:http';
@@ -75,6 +75,7 @@ class Player1Scene extends Phaser.Scene {
       this.mousePositionText = null;
       this.demonPileCount = null;
       this.deckPileCount = null;
+      this.decks = [];
    }
 
    preload() {
@@ -117,28 +118,34 @@ class Player1Scene extends Phaser.Scene {
 
       //console.log(this.scene.manager.scenes);
 
+      
+
       this.cameras.main.setBackgroundColor('#408080');
-      this.cameras.main.setViewport(0, 0, 650, 450);
+      this.cameras.main.setViewport(0, 0, 650, 750);
 
       createDeckBottom(this);
 
       this.mousePositionText = this.add.text(5, 5, '', { font: '16px Courier', fill: '#ffffff' });
-      this.demonPileCount = this.add.text(165, 161, '', { font: '16px Courier', fill: '#ffffff' });
-      this.deckPileCount = this.add.text(69, 30, '', { font: '16px Courier', fill: '#ffffff' });
+      this.demonPileCount = this.add.text(149, 422, '', { font: '16px Courier', fill: '#ffffff' });
+      this.deckPileCount = this.add.text(69, 539, '', { font: '16px Courier', fill: '#ffffff' });
 
       // Draw the places cards can be placed
       for (let i = 0; i < centerPileX.length; i++) {
-         deckBottom.push(this.add.sprite(centerPileX[i], centerPileY - 135, 'cards' + suits[i], 0).setTint(0x408080));
+         deckBottom.push(this.add.sprite(centerPileX[i], centerPileY - 104, 'cards' + suits[i], 0).setTint(0x408080));
          deckBottom[i].setDepth(0);
       }
       for (let i = 0; i < centerPileX.length; i++) {
          deckBottom.push(this.add.sprite(centerPileX[i], centerPileY, 'deckBottomTexture'));
       }
-      deckBottom.push(this.add.sprite(75, endPileY, 'deckBottomTexture'));
-      deckBottom.push(this.add.sprite(172, endPileY, 'deckBottomTexture'));
-      deckBottom.push(this.add.sprite(172, centerPileY, 'deckBottomTexture'));
+      // Deck bottom
+      deckBottom.push(this.add.sprite(75, centerPileY + 120, 'deckBottomTexture'));
+      // Demon pile bottom
+      deckBottom.push(this.add.sprite(156, endPileY[0] + 104, 'deckBottomTexture'));
+      // Draw pile bottom
+      deckBottom.push(this.add.sprite(156, centerPileY + 120, 'deckBottomTexture'));
 
-      let deckSprite = this.add.sprite(75, 95, 'cardsDecks', 1);
+      // Draw the deck sprite
+      let deckSprite = this.add.sprite(75, 608, 'cardsDecks', 1);
       deckSprite.setInteractive();
       //deckSprite.setScale(0.5);
 
@@ -187,7 +194,11 @@ class Player1Scene extends Phaser.Scene {
             if (!foundDeck) {
               let scene = this.scene.manager.scenes[playerIDs.indexOf(playerID)];
               let newDeck = createAllCards(scene, allCards.deck.userID);
+              let newDeck2 = createAllCards(this, allCards.deck.userID);
               decks.push(newDeck);
+              // made for drawing endpiles
+              this.decks.push(newDeck2);
+              //console.log(this.decks);
             }
           
             if (allCards.demonPile.length === 0) {
@@ -206,6 +217,7 @@ class Player1Scene extends Phaser.Scene {
             }
           
             let foundDeck = decks.find(aDeck => aDeck.deck.userID === allCards.deck.userID);
+            let foundDeck2 = this.decks.find(aDeck => aDeck.deck.userID === allCards.deck.userID);
             //console.log(foundDeck);
             let centerPilesData = allCards.centerPiles;
             let endPilesData = allCards.endPiles;
@@ -216,9 +228,11 @@ class Player1Scene extends Phaser.Scene {
             let playerIndex = playerIDs.indexOf(foundDeck.deck.userID);
             //console.log(playerIndex);
             if (playerIndex !== -1) {
-              let scene = this.scene.manager.scenes[playerIndex];
-              //console.log(scene);
-              updatePiles(scene, foundDeck, foundDeck.deck, centerPilesData, endPilesData, drawPileData, 
+               let scene = this.scene.manager.scenes[playerIndex];
+               //console.log(scene);
+               updatePiles(scene, foundDeck, foundDeck.deck, centerPilesData, endPilesData, drawPileData, 
+                  demonPileData, deckPileData, canRender);
+               updatePiles(this, foundDeck2, foundDeck2.deck, centerPilesData, endPilesData, drawPileData,
                   demonPileData, deckPileData, canRender);
             } else {
               console.error(`No scene found for user ID: ${userID}`);
@@ -240,13 +254,13 @@ class Player1Scene extends Phaser.Scene {
       // Functions happen on clicking on deck, should be converted to an event listener
       this.input.on('pointerdown', (_pointer) => {
          let allCards = decks.find(allCards => allCards.deck.userID === userID);
-         console.log(decks);
-         console.log(userID);
+         //console.log(decks);
+         //console.log(userID);
          // Dupe code on variable declarations, probably could be cleaned up to be nicer
          // These nested ifs look like trash, should be cleaned up soon
          var mouseX = this.input.mousePointer.x;
          var mouseY = this.input.mousePointer.y;
-         if (mouseX >= 56 && mouseX <= 144 && mouseY >= 56 && mouseY <= 176) {
+         if (mouseX >= 43 && mouseX <= 107 && mouseY >= 555 && mouseY <= 646) {
             let drawn = allCards.deck.drawCard(allCards.deckPile);
             if (drawn !== undefined) {
                allCards.drawPile.push(drawn);
@@ -262,7 +276,8 @@ class Player1Scene extends Phaser.Scene {
             }
             console.log(allCards);
             sendPiles(allCards);
-            renderCards(this, allCards, userID, centerPileX, centerPileY, endPileX, endPileY);
+            renderCards(this, allCards, userID, centerPileX, centerPileY, endPileX, endPileY[0]);
+            renderEndCards(this, this.decks, endPileX, endPileY);
          }
       });
 
@@ -310,7 +325,7 @@ class Player1Scene extends Phaser.Scene {
       this.input.on('dragend', (_pointer, container) => {
          // Find your own allCards object in decks to use
          let allCards = decks.find(allCards => allCards.deck.userID === userID);
-         console.log(allCards);
+         // console.log(allCards);
 
          canRender = true;
 
@@ -335,10 +350,30 @@ class Player1Scene extends Phaser.Scene {
                container.setData('pile', allCards.centerPiles[i]);
                break;
             } else if (mouseX >= endPileX[i] - 44 && mouseX <= endPileX[i] + 44 &&
-               mouseY >= endPileY - 62 && mouseY <= endPileY + 62) {
+                        mouseY >= endPileY[0] - 62 && mouseY <= endPileY[0] + 62) {
                for (let i = 0; i < allCards.endPiles.length; i++) {
                   if (this.canPlaceOnEndPile(container, allCards.endPiles[i], i)) {
-                     for (let j = 0; j < allCards.endPiles[i].length + 1; j++) {
+                     // Remove the card from its original pile
+                     let originalPile = container.getData('pile');
+                     let index = originalPile.indexOf(container);
+                     if (index !== -1) {
+                           originalPile.splice(index, 1);
+                     }
+                     // Add the card to the end pile
+                     allCards.endPiles[i].push(container);
+   
+                     // Store a reference to the new pile in the card
+                     container.setData('pile', allCards.endPiles[i]);
+                     break;
+                  }
+               }
+               break;
+            } else if (mouseX >= endPileX[i] - 44 && mouseX <= endPileX[i] + 44 &&
+                        mouseY >= endPileY[1] - 62 && mouseY <= endPileY[1] + 62) {
+               for (let i = 0; i < allCards.endPiles.length; i++) {
+                  //console.log("IS WORKING 1" + i);
+                  for (let i = 0; i < allCards.endPiles.length; i++) {
+                     if (this.canPlaceOnEndPile(container, allCards.endPiles[i], i)) {
                         // Remove the card from its original pile
                         let originalPile = container.getData('pile');
                         let index = originalPile.indexOf(container);
@@ -354,11 +389,64 @@ class Player1Scene extends Phaser.Scene {
                      }
                   }
                }
+               break;
+            } else if (mouseX >= endPileX[i] - 44 && mouseX <= endPileX[i] + 44 &&
+                        mouseY >= endPileY[2] - 62 && mouseY <= endPileY[2] + 62) {
+               
+               for (let i = 0; i < allCards.endPiles.length; i++) {
+                  //console.log("IS WORKING 2: " + i);
+                  for (let i = 0; i < allCards.endPiles.length; i++) {
+                     if (this.canPlaceOnEndPile(container, allCards.endPiles[i], i)) {
+                        // Remove the card from its original pile
+                        let originalPile = container.getData('pile');
+                        let index = originalPile.indexOf(container);
+                        if (index !== -1) {
+                              originalPile.splice(index, 1);
+                        }
+                        // Add the card to the end pile
+                        allCards.endPiles[i].push(container);
+      
+                        // Store a reference to the new pile in the card
+                        container.setData('pile', allCards.endPiles[i]);
+                        break;
+                     }
+                  }
+               }
+               break;
+
+               /*
+                  Next problem to work on is syncing state with server, but should probably get some sleep first
+               */
+
+            } else if (mouseX >= endPileX[i] - 44 && mouseX <= endPileX[i] + 44 &&
+                        mouseY >= endPileY[3] - 62 && mouseY <= endPileY[3] + 62) {
+               for (let i = 0; i < allCards.endPiles.length; i++) {
+                  //console.log("IS WORKING 3" + i);
+                  for (let i = 0; i < allCards.endPiles.length; i++) {
+                     if (this.canPlaceOnEndPile(container, allCards.endPiles[i], i)) {
+                        // Remove the card from its original pile
+                        let originalPile = container.getData('pile');
+                        let index = originalPile.indexOf(container);
+                        if (index !== -1) {
+                              originalPile.splice(index, 1);
+                        }
+                        // Add the card to the end pile
+                        allCards.endPiles[i].push(container);
+      
+                        // Store a reference to the new pile in the card
+                        container.setData('pile', allCards.endPiles[i]);
+                        break;
+                     }
+                  }
+               }
+               break;
             }
-         }
+         }  
          sendPiles(allCards);
 
-         renderCards(this, allCards, allCards.deck.userID, centerPileX, centerPileY, endPileX, endPileY);
+         renderEndCards(this, this.decks, endPileX, endPileY);
+         renderCards(this, allCards, allCards.deck.userID, centerPileX, centerPileY, endPileX, endPileY[0]);
+         
       });
    }
 
@@ -382,16 +470,16 @@ class Player1Scene extends Phaser.Scene {
       //console.log(this.playerID);
 
       timeSinceLastMove++;
-      if ((timeSinceLastMove % 300) === 0) { // Using 300 because higher tickrate is annoying, lower it later to 30
+      if ((timeSinceLastMove % 30) === 0) { // Using 300 because higher tickrate is annoying, lower it later to 30
          socket.emit('returnPiles');  // Fetches gamestate from server after 6 seconds of inactivity
-         console.log("Test1");
+         //console.log("Test1");
          if (canRender === true && decks[0] !== undefined) {
-            console.log(decks[0]);
+            //console.log(decks[0]);
             //console.log(playerIDs);
-            
             //decks.forEach(allCards => {
-               console.log(allCards.deck.userID);
-               renderCards(this, allCards, allCards.deck.userID, centerPileX, centerPileY, endPileX, endPileY);
+               //console.log(allCards.deck.userID);
+               renderCards(this, allCards, allCards.deck.userID, centerPileX, centerPileY, endPileX, endPileY[0]);
+               renderEndCards(this, this.decks, endPileX, endPileY[0]);
            //});
         }
       }
@@ -483,7 +571,7 @@ class Player2Scene extends Phaser.Scene {
 
    create() {
       this.cameras.main.setBackgroundColor('#408080');
-      this.cameras.main.setViewport(0, 450, 450, 300);
+      this.cameras.main.setViewport(650, 0, 450, 250);
 
       createDeckBottom(this);
 
@@ -492,12 +580,12 @@ class Player2Scene extends Phaser.Scene {
       this.deckPileCount = this.add.text(46, 20, '', { font: '16px Courier', fill: '#ffffff' });
 
       // Draw the places cards can be placed
-      for (let i = 0; i < centerPileX2.length; i++) {
+      /*for (let i = 0; i < centerPileX2.length; i++) {
          deckBottom.push(this.add.sprite(centerPileX2[i], centerPileY2 - 90, 'cards' + suits[i], 0).setTint(0x408080));
          deckBottom[i].setDepth(0);
-      }
+      }*/
       for (let i = 0; i < centerPileX2.length; i++) {
-         deckBottom.push(this.add.sprite(centerPileX2[i], centerPileY2, 'deckBottomTexture'));
+         deckBottom.push(this.add.sprite(centerPileX2[i], centerPileY2[0], 'deckBottomTexture'));
       }
       deckBottom.push(this.add.sprite(50, endPileY2, 'deckBottomTexture'));
       deckBottom.push(this.add.sprite(115, endPileY2, 'deckBottomTexture'));
@@ -540,8 +628,8 @@ class Player2Scene extends Phaser.Scene {
          //console.log("Test2");
          //console.log(decks);
          if (canRender === true && decks[1] !== undefined) {
-            console.log(decks);
-            console.log(playerIDs);
+            //console.log(decks);
+            //console.log(playerIDs);
             let allCards = decks[1];
             //decks.forEach(allCards => {
                console.log(allCards.deck.userID);
@@ -570,7 +658,7 @@ class Player3Scene extends Phaser.Scene {
 
    create() {
       this.cameras.main.setBackgroundColor('#408080');
-      this.cameras.main.setViewport(0, 750, 450, 300);
+      this.cameras.main.setViewport(650, 250, 450, 250);
 
       createDeckBottom(this);
 
@@ -579,10 +667,10 @@ class Player3Scene extends Phaser.Scene {
       this.deckPileCount = this.add.text(46, 20, '', { font: '16px Courier', fill: '#ffffff' });
 
       // Draw the places cards can be placed
-      for (let i = 0; i < centerPileX2.length; i++) {
+      /*for (let i = 0; i < centerPileX2.length; i++) {
          deckBottom.push(this.add.sprite(centerPileX2[i], centerPileY2 - 90, 'cards' + suits[i], 0).setTint(0x408080));
          deckBottom[i].setDepth(0);
-      }
+      }*/
       for (let i = 0; i < centerPileX2.length; i++) {
          deckBottom.push(this.add.sprite(centerPileX2[i], centerPileY2, 'deckBottomTexture'));
       }
@@ -629,7 +717,7 @@ class Player3Scene extends Phaser.Scene {
             //console.log(playerIDs);
             //let allCards = decks[2];
             //decks.forEach(allCards => {
-               console.log(allCards.deck.userID);
+               //console.log(allCards.deck.userID);
                renderCards(this, allCards, allCards.deck.userID, centerPileX2, centerPileY2, endPileX2, endPileY2);
            //});
         }
@@ -655,7 +743,7 @@ class Player4Scene extends Phaser.Scene {
 
    create() {
       this.cameras.main.setBackgroundColor('#408080');
-      this.cameras.main.setViewport(0, 1050, 450, 300);
+      this.cameras.main.setViewport(650, 500, 450, 250);
 
       createDeckBottom(this);
 
@@ -664,10 +752,10 @@ class Player4Scene extends Phaser.Scene {
       this.deckPileCount = this.add.text(46, 20, '', { font: '16px Courier', fill: '#ffffff' });
 
       // Draw the places cards can be placed
-      for (let i = 0; i < centerPileX2.length; i++) {
+      /*for (let i = 0; i < centerPileX2.length; i++) {
          deckBottom.push(this.add.sprite(centerPileX2[i], centerPileY2 - 90, 'cards' + suits[i], 0).setTint(0x408080));
          deckBottom[i].setDepth(0);
-      }
+      }*/
       for (let i = 0; i < centerPileX2.length; i++) {
          deckBottom.push(this.add.sprite(centerPileX2[i], centerPileY2, 'deckBottomTexture'));
       }
@@ -715,7 +803,7 @@ class Player4Scene extends Phaser.Scene {
             //console.log(playerIDs);
             //let allCards = decks[3];
             //decks.forEach(allCards => {
-               console.log(allCards.deck.userID);
+               //console.log(allCards.deck.userID);
                renderCards(this, allCards, allCards.deck.userID, centerPileX2, centerPileY2, endPileX2, endPileY2);
            //});
          }
@@ -786,7 +874,7 @@ const config = {
    parent: 'game',
    scale: {
       width: 1200,//1500,
-      height: 1450,//1023,
+      height: 1500,//1023,
       mode: Phaser.Scale.NONE,
       //autoCenter: Phaser.Scale.CENTER_BOTH,
    },

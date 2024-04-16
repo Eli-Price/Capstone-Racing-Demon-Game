@@ -40,14 +40,30 @@ export const values = (() => {
    return Object.freeze(Object.assign({}, _enum, _reverseEnum));
 })();
 
-// Positions of the piles
+/*
+// Positions of the piles in player1Scene
+export const centerPileX = [320, 420, 520, 620].map(x => x * 0.75);
+export const centerPileY = 520 * 0.75;
+export const endPileX = [320, 420, 520, 620].map(x => x * 0.75);
+export const endPileY = 380 * 0.75;
+*/
 
-export const centerPileX = [315, 405, 495, 585];
-export const centerPileY = 225;
-export const endPileX = [315, 405, 495, 585];
-export const endPileY = 90;
+// Positions of the piles in player1Scene
+export const centerPileX = [320, 420, 520, 620].map(x => x * 0.75);
+export const centerPileY = 645 * 0.75;
+export const endPileX = [320, 420, 520, 620].map(x => x * 0.75);
+export const endPileY = [378, 278, 178, 78];
+/*export const drawPileX = 100 * 0.75;
+export const drawPileY = 700 * 0.75;
+export const demonPileX = 100 * 0.75;
+export const demonPileY = 700 * 0.75;*/
 
-export const centerPileX2 = [420, 540, 660, 780].map(x => x * 0.5);
-export const centerPileY2 = 300 * 0.5;
-export const endPileX2 = [420, 540, 660, 780].map(x => x * 0.5);
+// Positions of the piles in other player scenes
+export const centerPileX2 = [320, 420, 520, 620].map(x => x * 0.5);
+export const centerPileY2 = 120 * 0.5;
+export const endPileX2 = [320, 420, 520, 620].map(x => x * 0.5);
 export const endPileY2 = 120 * 0.5;
+/*export const drawPileX2 = 100 * 0.75;
+export const drawPileY2 = 700 * 0.75;
+export const demonPileX2 = 100 * 0.75;
+export const demonPileY2 = 700 * 0.75;*/

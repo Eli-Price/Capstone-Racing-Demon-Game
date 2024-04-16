@@ -14,11 +14,19 @@ export function renderCards(scene, allCards, userID, centerPileX, centerPileY, e
   // Clears any cards that shouldn't be visible in the drawPile
   //console.log(allCards.deck.cards);
   allCards.deck.cards.forEach(card => {
-     if (allCards.deckPile.includes(card)) {
+    if (allCards.deckPile.includes(card)) {
+      card.getAt(0).setVisible(false);
+      card.setInteractive(false);
+      card.x = 0;
+    }
+
+    allCards.endPiles.forEach(endPile => {
+      if (endPile.includes(card)) {
         card.getAt(0).setVisible(false);
         card.setInteractive(false);
-        card.x = 60;
-     }
+        card.x = 0;
+      }
+    });
      //console.log(scene.children);
   });
   
@@ -43,26 +51,7 @@ export function renderCards(scene, allCards, userID, centerPileX, centerPileY, e
         card.setData('pile', allCards.centerPiles[i]);
      }
   }
-  // Draw each card at its appropriate position for endPiles
-  for (let i = 0; i < allCards.endPiles.length; i++) {
-     if (allCards.endPiles[i].length > 0) {
-        let j = allCards.endPiles[i].length - 1; // Get the last card in the pile
-        //let card = scene.add.existing(allCards.endPiles[i][j]);
-        let card = allCards.endPiles[i][j];
-        //card.setInteractive(new Phaser.Geom.Rectangle(-44, -62, 88, 124), Phaser.Geom.Rectangle.Contains);
-        /*card.setInteractive(isOwnDeck);
-        if (isOwnDeck) { 
-          scene.input.setDraggable(card);
-        }*/
-        card.x = endPileX[i];
-        card.y = endPileY;
-        if (card.getAt(0)){
-           card.getAt(0).setVisible(true);
-        }
-        card.setDepth(j);
-        card.setData('pile', allCards.endPiles[i]);
-     }
-  }
+
   // Draw each card at its appropriate position for drawPile
   for (let i = 0; i < allCards.drawPile.length; i++) {
      //let card = scene.add.existing(allCards.drawPile[i]);
@@ -73,16 +62,17 @@ export function renderCards(scene, allCards, userID, centerPileX, centerPileY, e
         scene.input.setDraggable(card);
       //}
       if (!isOwnDeck) {
-        card.x = 115;
+        card.x = 105;
       } else {
-        card.x = 172;
+        card.x = 156;
       }
-     card.y = endPileY;
+     card.y = centerPileY + 120;
      // Set faceup sprite to visible
      card.getAt(0).setVisible(true);
      card.setDepth(i + 4);
      card.setData('pile', allCards.drawPile);
   }
+
   // Draw each card at its appropriate position for demonPile
   for (let i = 0; i < allCards.demonPile.length; i++) {
     //let card = scene.add.existing(allCards.demonPile[i]);
@@ -93,9 +83,9 @@ export function renderCards(scene, allCards, userID, centerPileX, centerPileY, e
       scene.input.setDraggable(card);
     }
     if (!isOwnDeck) {
-      card.x = 115;
+      card.x = 105;
     } else {
-      card.x = 172;
+      card.x = 156;
     }
     card.y = centerPileY;
     card.getAt(0).setVisible(true);
@@ -123,5 +113,35 @@ export function renderCards(scene, allCards, userID, centerPileX, centerPileY, e
   /*if (isOwnDeck) {
      scene.cameras.main.rotation = 2 * 3.1415926/2;
   }*/
+
+
+}
+
+export function renderEndCards(scene, decks, endPileX, endPileY) {
+  
+  let count = 0;
+  scene.decks.forEach(deck => {
+    // Draw each card at its appropriate position for endPiles
+    for (let i = 0; i < deck.endPiles.length; i++) {
+      if (deck.endPiles[i].length > 0) {
+        let j = deck.endPiles[i].length - 1; // Get the last card in the pile
+        //let card = scene.add.existing(allCards.endPiles[i][j]);
+        let card = deck.endPiles[i][j];
+        //card.setInteractive(new Phaser.Geom.Rectangle(-44, -62, 88, 124), Phaser.Geom.Rectangle.Contains);
+        //card.setInteractive(isOwnDeck);
+        //if (isOwnDeck) { 
+          //scene.input.setDraggable(card);
+        //}
+        card.x = endPileX[i];
+        card.y = endPileY - count;
+        if (card.getAt(0)){
+            card.getAt(0).setVisible(true);
+        }
+        card.setDepth(j);
+        card.setData('pile', deck.endPiles[i]);
+      }
+    }
+    count += 100;
+  });
 }
 
