@@ -6,8 +6,8 @@ import { centerPileX, centerPileY, endPileX, endPileY } from './card_config.js';
 
 
 // Sends the users gamestate to the server
-export function sendPiles(allCards) {
-  console.log(allCards.centerPiles);
+export function sendPiles(scene, allCards) {
+  //console.log(allCards.centerPiles);
   let centerPilesData = [[],[],[],[]];
   let endPilesData = [[],[],[],[]];
   let drawPileData = [];
@@ -26,8 +26,7 @@ export function sendPiles(allCards) {
      }
   };
 
-  // Plus 1s because there are fake continers in the endpiles for the transparent sprites that go on the bottom.
-  for (let i = 0; i < allCards.endPiles.length; i++) {
+  /*for (let i = 0; i < allCards.endPiles.length; i++) {
      for (let j = 0; j < allCards.endPiles[i].length; j++) {
         let pileData = {name : '', suit : 0, value : 0};
         pileData.name = allCards.endPiles[i][j].getAt(2).name;
@@ -36,7 +35,7 @@ export function sendPiles(allCards) {
 
         endPilesData[i][j] = pileData;
      }
-  };
+  };*/
 
   for (let i = 0; i < allCards.drawPile.length; i++) {
      let pileData = {name : '', suit : 0, value : 0};
@@ -65,8 +64,7 @@ export function sendPiles(allCards) {
      deckPileData[i] = pileData;
   };
 
-  socket.emit('sendPiles', centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData);
-  //console.log("Test2")
+  socket.emit('sendPiles', centerPilesData, /*endPilesData, */drawPileData, demonPileData, deckPileData);
 }
 
 // Recieves the gamestate sent from the server and updates the client

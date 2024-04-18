@@ -62,7 +62,7 @@ io.on('connection', (socket) => {
         sessionStore.saveSession(userID, {
             userID: userID,
             roomID: roomID,
-            allCards: socket.allCards
+            allCards: socket.allCards,
         });
     }
 
@@ -90,28 +90,26 @@ io.on('connection', (socket) => {
 
     socket.on('dealCards', () => {
         //let playerCards = createAllCards(userID);
-        //console.log(socket.allCards.centerPile1);
         const room = sessionStore.getRoom(roomID);
+        let endPiles = sessionStore.getEndPiles(roomID);
         const allPlayersCards = room.players.map(playerID => {
             const session = sessionStore.findSession(playerID);
             //console.log(session.allCards);
             return session.allCards;
         });
-        //console.log(allPlayersCards)
         // Sends out all piles, and ID of the player sending them
-        socket.to(roomID).emit('recievePiles', userID, allPlayersCards);
-        /*socket.emit('recievePiles', socket.allCards.centerPiles, socket.allCards.endPiles, socket.allCards.drawPile, 
-                        socket.allCards.demonPile, socket.allCards.deckPile);*/
+        socket.to(roomID).emit('recievePiles', userID, allPlayersCards, endPiles);
     });
 
-    socket.on('sendPiles', (centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData) => {
+    socket.on('sendPiles', (centerPilesData, /*endPilesData, */drawPileData, demonPileData, deckPileData) => {
         //console.log('Updating piles');
 
-        updateCards(socket.allCards, centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData);
+        updateCards(socket.allCards, centerPilesData, /*endPilesData, */drawPileData, demonPileData, deckPileData);
         const room = sessionStore.getRoom(roomID);
-        room.players.forEach(playerID => {
+        let endPiles = sessionStore.getEndPiles(roomID);
+        room.players.forEach((playerID) => {
             // Find the session for the player
-            const session = sessionStore.findSession(playerID);
+            let session = sessionStore.findSession(playerID);
     
             // If the session exists and the session's userID matches the socket's userID
             if (session && session.userID === socket.userID) {
@@ -124,30 +122,33 @@ io.on('connection', (socket) => {
             //console.log(session.allCards);
             return session.allCards;
         });
-        //console.log(allPlayersCards)
-        /*allPlayersCards.forEach(allCards => {
-            console.log(allCards.deck.userID);
-        });*/
-        //console.log(userID);
-        socket.to(roomID).emit('recievePiles', userID, allPlayersCards);
-        /*socket.emit('recievePiles', socket.allCards.centerPiles, socket.allCards.endPiles, socket.allCards.drawPile, 
-                        socket.allCards.demonPile, socket.allCards.deckPile);*/
+        
+        socket.to(roomID).emit('recievePiles', userID, allPlayersCards, endPiles);
     });
 
-    socket.on('returnPiles', () => {;
+    socket.on('sendEndCard', (card, i, j) => {
+        let endPiles = sessionStore.getEndPiles(roomID);
+        sessionStore.setEndPile(roomID, i, j, card);
+
         const room = sessionStore.getRoom(roomID);
         const allPlayersCards = room.players.map(playerID => {
             const session = sessionStore.findSession(playerID);
             //console.log(session.allCards);
             return session.allCards;
         });
-        //console.log(allPlayersCards)
-        /*allPlayersCards.forEach(allCards => {
-            console.log(allCards.deck.userID);
-        });*/
-        socket.to(roomID).emit('recievePiles', userID, allPlayersCards);
-        /*socket.emit('recievePiles', socket.allCards.centerPiles, socket.allCards.endPiles, socket.allCards.drawPile, 
-                        socket.allCards.demonPile, socket.allCards.deckPile);*/
+        console.log(endPiles);
+        socket.to(roomID).emit('recievePiles', userID, allPlayersCards, endPiles);
+    });
+
+    socket.on('returnPiles', () => {;
+        const room = sessionStore.getRoom(roomID);
+        let endPiles = sessionStore.getEndPiles(roomID);
+        const allPlayersCards = room.players.map(playerID => {
+            const session = sessionStore.findSession(playerID);
+            //console.log(session.allCards);
+            return session.allCards;
+        });
+        socket.to(roomID).emit('recievePiles', userID, allPlayersCards, endPiles);
     });
 });
 
@@ -157,11 +158,8 @@ server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
 
-/*server.listen(3000, () => {
-    console.log('listening on localhost:3000');
-});*/
 
-function updateCards(allCards, centerPilesData, endPilesData, drawPileData, demonPileData, deckPileData) {
+function updateCards(allCards, centerPilesData, /*endPilesData, */drawPileData, demonPileData, deckPileData) {
     // This is starting to reach functionality
 
     //console.log(centerPilesData[0][0].name);
@@ -173,10 +171,10 @@ function updateCards(allCards, centerPilesData, endPilesData, drawPileData, demo
     allCards.centerPile3.length = 0;
     allCards.centerPile4.length = 0;
 
-    allCards.endPile1.length = 0;
+    /*allCards.endPile1.length = 0;
     allCards.endPile2.length = 0;
     allCards.endPile3.length = 0;
-    allCards.endPile4.length = 0;
+    allCards.endPile4.length = 0;*/
 
     allCards.drawPile.length = 0;
     allCards.demonPile.length = 0;
@@ -189,11 +187,11 @@ function updateCards(allCards, centerPilesData, endPilesData, drawPileData, demo
             allCards.centerPiles[i].push(allCards.deck.cards.find(card => card.name === centerPilesData[i][j].name));
         }
     }
-    for (let i = 0; i < endPilesData.length; i++) {
+    /*for (let i = 0; i < endPilesData.length; i++) {
         for (let j = 0; j < endPilesData[i].length; j++) {
             allCards.endPiles[i].push(allCards.deck.cards.find(card => card.name === endPilesData[i][j].name));
         }
-    }
+    }*/
     for (let i = 0; i < drawPileData.length; i++) {
         allCards.drawPile.push(allCards.deck.cards.find(card => card.name === drawPileData[i].name));
     }
@@ -217,10 +215,10 @@ function createAllCards(playerId) {
         centerPile3 : [],
         centerPile4 : [],
 
-        endPile1 : [],
+        /*endPile1 : [],
         endPile2 : [],
         endPile3 : [],
-        endPile4 : [],
+        endPile4 : [],*/
 
         drawPile : [],
         demonPile : [],
@@ -230,7 +228,7 @@ function createAllCards(playerId) {
     }
 
     allCards.centerPiles = [allCards.centerPile1, allCards.centerPile2, allCards.centerPile3, allCards.centerPile4];
-    allCards.endPiles = [allCards.endPile1, allCards.endPile2, allCards.endPile3, allCards.endPile4];
+    //allCards.endPiles = [allCards.endPile1, allCards.endPile2, allCards.endPile3, allCards.endPile4];
 
     allCards.deck.Deal(allCards.centerPiles, allCards.endPiles, allCards.demonPile, allCards.deckPile);
 

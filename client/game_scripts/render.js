@@ -1,11 +1,13 @@
 // All the scripts for rendering cards
 
+import { endPileY2, endPileY } from "./card_config.js";
+
 // This is more like what I will want to do, the server should be checking if a card goes on a stack,
    //   and then sending back the new state of the game
    // Or its just a socket.on for when the board state updates, but then ther probably needs to be more than one
    //    function to update the board unless I want to waste a ton of the servers time
    
-export function renderCards(scene, allCards, userID, centerPileX, centerPileY, endPileX, endPileY) {
+export function renderCards(scene, allCards, userID, centerPileX, centerPileY, centerPileX2, centerPileY2) {
   // Add the deck sprite
   let playerID = localStorage.getItem('userID');
   let isOwnDeck = playerID === userID;
@@ -56,17 +58,19 @@ export function renderCards(scene, allCards, userID, centerPileX, centerPileY, e
   for (let i = 0; i < allCards.drawPile.length; i++) {
      //let card = scene.add.existing(allCards.drawPile[i]);
      let card = allCards.drawPile[i];
-     card.setInteractive(new Phaser.Geom.Rectangle(-44, -62, 88, 124), Phaser.Geom.Rectangle.Contains);
+     //card.setInteractive(new Phaser.Geom.Rectangle(-44, -62, 88, 124), Phaser.Geom.Rectangle.Contains);
      card.setInteractive(isOwnDeck);
       //if (isOwnDeck) { 
         scene.input.setDraggable(card);
       //}
       if (!isOwnDeck) {
         card.x = 105;
+        card.y = centerPileY2;
       } else {
         card.x = 156;
+        card.y = centerPileY + 120;
       }
-     card.y = centerPileY + 120;
+     //card.y = centerPileY;
      // Set faceup sprite to visible
      card.getAt(0).setVisible(true);
      card.setDepth(i + 4);
@@ -84,10 +88,12 @@ export function renderCards(scene, allCards, userID, centerPileX, centerPileY, e
     }
     if (!isOwnDeck) {
       card.x = 105;
+      card.y = endPileY2 + 82;
     } else {
       card.x = 156;
+      card.y = endPileY[0] + 106;
     }
-    card.y = centerPileY;
+    //card.y = centerPileY + 82;
     card.getAt(0).setVisible(true);
     card.setDepth(i + 4);
     // Store a reference to the pile in the card
@@ -118,8 +124,23 @@ export function renderCards(scene, allCards, userID, centerPileX, centerPileY, e
 }
 
 export function renderEndCards(scene, decks, endPileX, endPileY) {
-  
+
   let count = 0;
+
+  decks.forEach(deck => {
+    deck.deck.cards.forEach(card => {
+      scene.decks.forEach(deck2 => {
+        deck2.endPiles.forEach(endPile => {
+          if (card.getData('pile') == endPile) {
+            card.getAt(0).setVisible(false);
+            card.setInteractive(false);
+            card.x = 0;
+          }
+        });
+      });
+    });
+  });
+  
   scene.decks.forEach(deck => {
     // Draw each card at its appropriate position for endPiles
     for (let i = 0; i < deck.endPiles.length; i++) {
@@ -128,20 +149,18 @@ export function renderEndCards(scene, decks, endPileX, endPileY) {
         //let card = scene.add.existing(allCards.endPiles[i][j]);
         let card = deck.endPiles[i][j];
         //card.setInteractive(new Phaser.Geom.Rectangle(-44, -62, 88, 124), Phaser.Geom.Rectangle.Contains);
-        //card.setInteractive(isOwnDeck);
-        //if (isOwnDeck) { 
-          //scene.input.setDraggable(card);
-        //}
+        card.setInteractive(false);
         card.x = endPileX[i];
         card.y = endPileY - count;
         if (card.getAt(0)){
             card.getAt(0).setVisible(true);
         }
-        card.setDepth(j);
+        card.getAt(0).setDepth(j);
         card.setData('pile', deck.endPiles[i]);
       }
     }
     count += 100;
+
   });
 }
 

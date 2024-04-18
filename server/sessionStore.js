@@ -16,6 +16,7 @@ export class InMemorySessionStore extends SessionStore {
   }
 
   saveSession(id, session) {
+    //session.endPiles = [[],[],[],[]];
     this.sessions.set(id, session);
   }
 
@@ -23,8 +24,22 @@ export class InMemorySessionStore extends SessionStore {
     return [...this.sessions.values()];
   }
 
+  getEndPiles (roomID) {
+    return this.rooms[roomID].endPiles;
+  }
+
+  setEndPile(roomID, i, j, card) {
+    if (i >= 0 && i < 4 && j >= 0 && j < 4) {
+      console.log(this.rooms[roomID].endPiles[i][j]);
+      this.rooms[roomID].endPiles[i][j].push(card);
+    } else {
+      throw new Error('Invalid end pile position');
+    }
+  }
+
   createRoom(roomID) {
-    this.rooms[roomID] = { isActive: true };
+    // This is an Abomination
+    this.rooms[roomID] = { isActive: true, endPiles: [[[],[],[],[]],[[],[],[],[]],[[],[],[],[]],[[],[],[],[]]] };
     console.log(this.rooms[roomID]);
   }
 
