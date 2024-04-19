@@ -52,7 +52,7 @@ export const endPileY = 380 * 0.75;
 export const centerPileX = [320, 420, 520, 620].map(x => x * 0.75);
 export const centerPileY = 645 * 0.75;
 export const endPileX = [320, 420, 520, 620].map(x => x * 0.75);
-export const endPileY = [378, 278, 178, 78];
+export const endPileY = [405, 305, 205, 105];
 /*export const drawPileX = 100 * 0.75;
 export const drawPileY = 700 * 0.75;
 export const demonPileX = 100 * 0.75;

@@ -22,7 +22,6 @@ export function sendPiles(scene, allCards) {
         pileData.value = allCards.centerPiles[i][j].getAt(2).value;
         
         centerPilesData[i][j] = pileData;
-        //console.log(centerPilesData[i][j]);
      }
   };
 
@@ -106,13 +105,6 @@ export function updatePiles(scene, allCards, deck, centerPilesData, endPilesData
   }
   for (let i = 0; i < deckPileData.length; i++) {
      allCards.deckPile.push(deck.cards.find(card => card.getAt(2).name === deckPileData[i].name));
-  }
-
-  //console.log('updating');
-  if (canRender === true) {
-    //let playerID = allCards.deck.userID;
-    //renderCards(scene, allCards, scene.playerID, centerPileX, centerPileY, endPileX, endPileY);
-    //renderEndCards(this, this.decks, endPileX, endPileY);
   }
 }
 

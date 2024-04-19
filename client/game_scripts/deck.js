@@ -27,6 +27,9 @@ export class Deck {
             card.container.getAt(2).setVisible(false); // It works, TypeScript is just being a pain
             card.container.setInteractive(new Phaser.Geom.Rectangle(-44, -62, 88, 124), Phaser.Geom.Rectangle.Contains);
             this.cards.push(card.container);
+
+            card.body = new Phaser.Physics.Arcade.Body(scene.physics.world, card.container);
+            card.body.setCollideWorldBounds(true);
          }
       }
    }

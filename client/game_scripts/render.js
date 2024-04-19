@@ -91,7 +91,7 @@ export function renderCards(scene, allCards, userID, centerPileX, centerPileY, c
       card.y = endPileY2 + 82;
     } else {
       card.x = 156;
-      card.y = endPileY[0] + 106;
+      card.y = endPileY[0] + 80;
     }
     //card.y = centerPileY + 82;
     card.getAt(0).setVisible(true);
@@ -151,7 +151,7 @@ export function renderEndCards(scene, decks, endPileX, endPileY) {
         //card.setInteractive(new Phaser.Geom.Rectangle(-44, -62, 88, 124), Phaser.Geom.Rectangle.Contains);
         card.setInteractive(false);
         card.x = endPileX[i];
-        card.y = endPileY - count;
+        card.y = (endPileY - 25) - count;
         if (card.getAt(0)){
             card.getAt(0).setVisible(true);
         }

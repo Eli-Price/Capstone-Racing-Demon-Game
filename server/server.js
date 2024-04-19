@@ -18,12 +18,16 @@ const server = createServer(app);
 const io = new Server(server, {
     connectionStateRecovery: {
         maxDisconnectionDuration: 10000
+    },
+    cors: {
+        origin: ["https://admin.socket.io"],
+        credentials: true
     }
     //adapter: createAdapter()
 });
 
 // It doesn't work
-//instrument(io, { auth: false });
+instrument(io, { auth: false });
 
 const sessionStore = new InMemorySessionStore();
 
