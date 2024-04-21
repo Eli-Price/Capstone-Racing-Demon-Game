@@ -138,7 +138,7 @@ export function createAllCards(scene, playerID) {
 }
 
 
-export function showGameOverPopup() {
+export function showGameOverPopup(p1Score, p2Score, p3Score, p4Score, winnerID, userID) {
   // Create a div for the popup
   let popup = document.createElement('div');
   popup.style.position = 'absolute';
@@ -150,19 +150,53 @@ export function showGameOverPopup() {
   popup.style.textAlign = 'center';
   popup.style.zIndex = '1000';
 
+  console.log('writing');
+
+
+  /*if (winnerID === userID) {
+    console.log("You won!");
+  } else {
+    console.log("You lost. The winner is player " + winnerID);
+  }*/
+
   // Create a p element for the game over message
   let message = document.createElement('p');
-  message.textContent = 'The game has ended.';
+  if (winnerID === userID) {
+    message.textContent = 'You Won! The game has ended.';
+  } else {
+    message.textContent = 'You Lost. The game has ended.';
+  }
   popup.appendChild(message);
+
+  // Create p elements for each player's score
+  let p1ScoreElement = document.createElement('p');
+  p1ScoreElement.textContent = `Player 1 Score: ${p1Score}`;
+  popup.appendChild(p1ScoreElement);
+
+  let p2ScoreElement = document.createElement('p');
+  p2ScoreElement.textContent = `Player 2 Score: ${p2Score}`;
+  popup.appendChild(p2ScoreElement);
+
+  let p3ScoreElement = document.createElement('p');
+  if (p3Score === undefined) { p3Score = 0; }
+  p3ScoreElement.textContent = `Player 3 Score: ${p3Score}`;
+  popup.appendChild(p3ScoreElement);
+
+  let p4ScoreElement = document.createElement('p');
+  if (p4Score === undefined) { p4Score = 0; }
+  p4ScoreElement.textContent = `Player 4 Score: ${p4Score}`;
+  popup.appendChild(p4ScoreElement);
 
   // Create a button that redirects to the home page
   let button = document.createElement('button');
   button.textContent = 'Go to Home Page';
   button.onclick = function() {
-  window.location.href = '../pages/index.html';
+    window.location.href = '../pages/index.html';
   };
   popup.appendChild(button);
 
   // Add the popup to the body
   document.body.appendChild(popup);
+
+  
 }

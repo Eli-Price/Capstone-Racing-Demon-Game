@@ -42,7 +42,6 @@ socket.on('connect', () => {
    socket.emit('joinGame', { roomID }, (response) => {
       if (response.success) {
          //socket.join(roomID);
-        // If the server responded with success, navigate to the game page
         // window.location.href = `../pages/game.html`;
       } else {
         // If the server responded with an error, display the error message
@@ -172,9 +171,24 @@ class Player1Scene extends Phaser.Scene {
 
       // Deal the cards, is here for the player scene only
       socket.emit('dealCards', userID);
-      /*setTimeout(() => {
-         renderCards(this);
-      }, 500);*/
+
+      //socket.emit('returnPiles');
+
+      socket.on('gameOver', (data) => {
+         const p1Score = data.scores[0];
+         const p2Score = data.scores[1];
+         const p3Score = data.scores[2];
+         const p4Score = data.scores[3];
+         gameOver = data.gameOver;
+         const winnerID = data.winner;
+
+         // handle the game over state and the score
+         if (gameOver) {
+            this.input.enabled = false;
+            showGameOverPopup(p1Score, p2Score, p3Score, p4Score, winnerID, userID);
+            //socket.removeAllListeners();
+         }
+      });
 
 
       socket.on('recievePiles', (userID, allPlayersCards, endPiles) => {
@@ -187,9 +201,9 @@ class Player1Scene extends Phaser.Scene {
                   playerIDs.push(allCards.deck.userID);
                }
             }
-            if (allCards.demonPile.length === 0) {
+            /*if (allCards.demonPile.length === 0) {
                gameOver = true;
-            }
+            }*/
          });
 
          playerIDs.forEach(playerID => {
@@ -208,9 +222,9 @@ class Player1Scene extends Phaser.Scene {
               // made for drawing endpiles
               this.decks.push(newDeck2);
             }
-          
-            if (allCards.demonPile.length === 0) {
-              gameOver = true;
+            //socket.emit('checkGameOver');
+            if (allCards.demonPile.length === 12 && gameOver === false) {
+               socket.emit('checkGameOver');
             }
          });
          
@@ -249,13 +263,13 @@ class Player1Scene extends Phaser.Scene {
             count++;
          });
       
-         if (gameOver) {
+         /*if (gameOver) {
             // Make all items uninteractable
             this.input.enabled = false;
       
             // Show a game over message
             showGameOverPopup();
-         }
+         }*/
       
       });
 

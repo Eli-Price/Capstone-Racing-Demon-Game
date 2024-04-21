@@ -53,7 +53,8 @@ io.on('connection', (socket) => {
 
     // Find the session for the user
     let session = sessionStore.findSession(userID);
-
+    let gameEnded = false;
+ 
     // If the session exists and the roomID matches
     if (session && session.roomID === roomID) {
         // Restore the allCards object from the session
@@ -72,6 +73,10 @@ io.on('connection', (socket) => {
 
     socket.on('disconnect', () => {
         console.log('user ' + userID + ' disconnected');
+        if (sessionStore.getRoomPlayerCount(roomID) === 0 && gameEnded == true) {
+            sessionStore.removePlayerFromRoom(roomID, userID);
+            sessionStore.deleteRoom(roomID);
+        }
     });
 
     socket.on('createGame', ({ roomID }) => {
@@ -93,22 +98,20 @@ io.on('connection', (socket) => {
     });
 
     socket.on('dealCards', () => {
-        //let playerCards = createAllCards(userID);
         const room = sessionStore.getRoom(roomID);
         let endPiles = sessionStore.getEndPiles(roomID);
         const allPlayersCards = room.players.map(playerID => {
             const session = sessionStore.findSession(playerID);
-            //console.log(session.allCards);
             return session.allCards;
         });
         // Sends out all piles, and ID of the player sending them
         socket.to(roomID).emit('recievePiles', userID, allPlayersCards, endPiles);
     });
 
-    socket.on('sendPiles', (centerPilesData, /*endPilesData, */drawPileData, demonPileData, deckPileData) => {
+    socket.on('sendPiles', (centerPilesData, drawPileData, demonPileData, deckPileData) => {
         //console.log('Updating piles');
 
-        updateCards(socket.allCards, centerPilesData, /*endPilesData, */drawPileData, demonPileData, deckPileData);
+        updateCards(socket.allCards, centerPilesData, drawPileData, demonPileData, deckPileData);
         const room = sessionStore.getRoom(roomID);
         let endPiles = sessionStore.getEndPiles(roomID);
         room.players.forEach((playerID) => {
@@ -122,8 +125,7 @@ io.on('connection', (socket) => {
             }
         });
         const allPlayersCards = room.players.map(playerID => {
-            const session = sessionStore.findSession(playerID);
-            //console.log(session.allCards);
+            const session = sessionStore.findSession(playerID);                     
             return session.allCards;
         });
         
@@ -137,14 +139,15 @@ io.on('connection', (socket) => {
         const room = sessionStore.getRoom(roomID);
         const allPlayersCards = room.players.map(playerID => {
             const session = sessionStore.findSession(playerID);
-            //console.log(session.allCards);
             return session.allCards;
         });
         console.log(endPiles);
         socket.to(roomID).emit('recievePiles', userID, allPlayersCards, endPiles);
     });
 
-    socket.on('returnPiles', () => {;
+    socket.on('returnPiles', () => {
+        //console.log(gameEnded);
+        if (gameEnded) return;
         const room = sessionStore.getRoom(roomID);
         let endPiles = sessionStore.getEndPiles(roomID);
         const allPlayersCards = room.players.map(playerID => {
@@ -154,6 +157,59 @@ io.on('connection', (socket) => {
         });
         socket.to(roomID).emit('recievePiles', userID, allPlayersCards, endPiles);
     });
+
+    socket.on('checkGameOver', () => {
+        const isGameOver = true; // logic to check if the game is over later
+        console.log('writing');
+        const room = sessionStore.getRoom(roomID);
+        let demonPiles = [];
+        room.players.forEach(playerID => {
+            const session = sessionStore.findSession(playerID);
+            demonPiles.push(session.allCards.demonPile); // assuming each session has a demonPile property
+            //console.log(demonPiles);
+        });
+
+        for (let i = 0; i < demonPiles.length; i++) {
+            if (demonPiles[i] == 0) {
+                isGameOver = true;
+                break;
+            }
+        }
+
+        if (isGameOver) {
+            const endPiles = sessionStore.getEndPiles(roomID);
+            let flattenedEndPiles = endPiles.flat(2);
+
+            // replace with your logic to calculate the scores
+            let scores = [];
+            let winner = '';
+            room.players.forEach((playerID, index) => {
+                scores[index] = flattenedEndPiles.filter(card => card.owner === playerID).length - demonPiles[index].length;
+                if (scores[index] === Math.max(...scores)) {
+                    winner = playerID;
+                }
+            });
+
+            let data = {
+                scores,
+                gameOver: isGameOver,
+                winner,
+            }
+
+            const allPlayersCards = room.players.map(playerID => {
+                const session = sessionStore.findSession(playerID);
+                //console.log(session.allCards);
+                return session.allCards;
+            });
+            socket.to(roomID).emit('recievePiles', userID, allPlayersCards, endPiles);
+
+            socket.to(roomID).emit('gameOver', data);
+            gameEnded = true;
+            //socket.removeAllListeners();
+        }
+        //socket.to(roomID).emit('gameOver', data);
+    });
+    
 });
 
 
@@ -163,11 +219,8 @@ server.listen(PORT, () => {
 });
 
 
-function updateCards(allCards, centerPilesData, /*endPilesData, */drawPileData, demonPileData, deckPileData) {
-    // This is starting to reach functionality
-
-    //console.log(centerPilesData[0][0].name);
-    //console.log(demonPileData[0].name);
+function updateCards(allCards, centerPilesData, drawPileData, demonPileData, deckPileData) {
+    // This is very functional now
 
     // Clear the existing arrays
     allCards.centerPile1.length = 0;
@@ -175,27 +228,15 @@ function updateCards(allCards, centerPilesData, /*endPilesData, */drawPileData, 
     allCards.centerPile3.length = 0;
     allCards.centerPile4.length = 0;
 
-    /*allCards.endPile1.length = 0;
-    allCards.endPile2.length = 0;
-    allCards.endPile3.length = 0;
-    allCards.endPile4.length = 0;*/
-
     allCards.drawPile.length = 0;
     allCards.demonPile.length = 0;
     allCards.deckPile.length = 0;
-
-    //console.log(endPilesData);
 
     for (let i = 0; i < centerPilesData.length; i++) {
         for (let j = 0; j < centerPilesData[i].length; j++) {
             allCards.centerPiles[i].push(allCards.deck.cards.find(card => card.name === centerPilesData[i][j].name));
         }
     }
-    /*for (let i = 0; i < endPilesData.length; i++) {
-        for (let j = 0; j < endPilesData[i].length; j++) {
-            allCards.endPiles[i].push(allCards.deck.cards.find(card => card.name === endPilesData[i][j].name));
-        }
-    }*/
     for (let i = 0; i < drawPileData.length; i++) {
         allCards.drawPile.push(allCards.deck.cards.find(card => card.name === drawPileData[i].name));
     }
@@ -219,11 +260,6 @@ function createAllCards(playerId) {
         centerPile3 : [],
         centerPile4 : [],
 
-        /*endPile1 : [],
-        endPile2 : [],
-        endPile3 : [],
-        endPile4 : [],*/
-
         drawPile : [],
         demonPile : [],
         deckPile : [],
@@ -232,10 +268,15 @@ function createAllCards(playerId) {
     }
 
     allCards.centerPiles = [allCards.centerPile1, allCards.centerPile2, allCards.centerPile3, allCards.centerPile4];
-    //allCards.endPiles = [allCards.endPile1, allCards.endPile2, allCards.endPile3, allCards.endPile4];
 
     allCards.deck.Deal(allCards.centerPiles, allCards.endPiles, allCards.demonPile, allCards.deckPile);
 
     return allCards;
+}
+
+function calculateScore(endPiles, demonPile) {
+    
+
+    return score;
 }
 

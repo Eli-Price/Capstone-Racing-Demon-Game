@@ -16,8 +16,22 @@ export class InMemorySessionStore extends SessionStore {
   }
 
   saveSession(id, session) {
-    //session.endPiles = [[],[],[],[]];
     this.sessions.set(id, session);
+  }
+
+  deleteSession(playerID) {
+    this.sessions.delete(playerID);
+  }
+
+  removePlayerFromRoom(roomID, playerID) {
+    const room = this.rooms.get(roomID);
+    if (room) {
+        room.players = room.players.filter(id => id !== playerID);
+    }
+  }
+
+  deleteRoom(roomID) {
+      this.rooms.delete(roomID);
   }
 
   findAllSessions() {
