@@ -40,6 +40,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 app.use(express.static(path.join(__dirname, '../client')));
 //app.use(express.static(path.join(__dirname, '../dist')));
 app.use(express.static(path.join(__dirname, '../assets')));
+app.use(express.static(path.join(__dirname, '../node_modules')));
 
 
 app.get('/', (req, res) => {
