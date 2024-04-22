@@ -1,4 +1,4 @@
-//import Phaser, { GameObjects } from '../node_modules/phaser/dist/phaser.min.js';
+import { Phaser, Scene, AUTO, GameObjects, Scale, Game } from 'phaser';
 //import Card from './card.js';
 //import crypto from 'crypto';
 import { suits, values} from './card_config.js';
@@ -57,7 +57,7 @@ socket.on('userJoined', (message) => {
    timeSinceLastMove = 0;
 });*/
 
-class Player1Scene extends Phaser.Scene {
+class Player1Scene extends Scene {
    constructor() {
       super('Player1Scene');
       this.mousePositionText = null;
@@ -578,7 +578,7 @@ class Player1Scene extends Phaser.Scene {
 
 
 
-class Player2Scene extends Phaser.Scene {
+class Player2Scene extends Scene {
    constructor() {
       super('Player2Scene');
       this.mousePositionText = null;
@@ -650,7 +650,7 @@ class Player2Scene extends Phaser.Scene {
 }
 
 
-class Player3Scene extends Phaser.Scene {
+class Player3Scene extends Scene {
    constructor() {
       super('Player3Scene');
       this.mousePositionText = null;
@@ -721,7 +721,7 @@ class Player3Scene extends Phaser.Scene {
 }
 
 
-class Player4Scene extends Phaser.Scene {
+class Player4Scene extends Scene {
    constructor() {
       super('Player4Scene');
       this.mousePositionText = null;
@@ -795,13 +795,13 @@ class Player4Scene extends Phaser.Scene {
 
 
 const config = {
-   type: Phaser.AUTO,
+   type: AUTO,
    scene: [Player1Scene, Player2Scene, Player3Scene, Player4Scene],
    parent: 'game',
    scale: {
       width: 1090,
       height: 790,
-      mode: Phaser.Scale.NONE,
+      mode: /*Phaser.*/Scale.NONE,
       //autoCenter: Phaser.Scale.CENTER_BOTH,
    },
    mipmapFilter: 'LINEAR_MIPMAP_NEAREST',
@@ -815,7 +815,7 @@ const config = {
 
 
 
-export const game = new Phaser.Game(config);
+export const game = new /*Phaser.*/Game(config);
 
 
 

@@ -1,6 +1,6 @@
-//import Phaser from '../node_modules/phaser/dist/phaser.esm.min.js';
+import { GameObjects } from 'phaser';
 
-export default class Card extends Phaser.GameObjects.Sprite{
+export default class Card extends /*Phaser.*/GameObjects.Sprite{
    name;  // string
    suit;  // integer
    value; // integer

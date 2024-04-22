@@ -38,9 +38,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // I'm not really sure if I should use these, don't know yet. Will need to change quite a bit if I don't, I think.
 //  maybe it's bad practice, but gonna use it for now.
 app.use(express.static(path.join(__dirname, '../client')));
-//app.use(express.static(path.join(__dirname, '../dist')));
+console.log(path.join(__dirname, '../client'));
+app.use(express.static(path.join(__dirname, '../dist')));
 app.use(express.static(path.join(__dirname, '../assets')));
-app.use(express.static(path.join(__dirname, '../node_modules')));
 
 
 app.get('/', (req, res) => {

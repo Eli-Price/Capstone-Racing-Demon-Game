@@ -5,14 +5,14 @@
    "type": "module",
    "scripts": {
       "dev": "nodemon server/main.ts",
-      "build": "npm install",
+      "build": "webpack",
       "devStart": "nodemon server/server.js",
-      "cStart": "nodemon server/main.ts"
+      "cStart": "nodemon server/main.ts",
+      "heroku-postbuild": "npm run build"
    },
    "devDependencies": {
-      "eslint": "^8.36.0",
-      "eslint-config-prettier": "^8.7.0",
-      "prettier": "^2.8.5"
+      "webpack": "^5.91.0",
+      "webpack-cli": "^5.1.4"
    },
    "dependencies": {
       "@socket.io/admin-ui": "^0.5.1",
