@@ -1,6 +1,5 @@
-// import Phaser from 'phaser';
+//import Phaser from '../node_modules/phaser/dist/phaser.esm.min.js';
 
-// This is a sprite because a raw gameObject can't render and breaks everything
 export default class Card extends Phaser.GameObjects.Sprite{
    name;  // string
    suit;  // integer

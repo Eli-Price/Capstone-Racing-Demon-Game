@@ -10,6 +10,7 @@ import { Server } from 'socket.io';
 //import sqlite3 from 'sqlite3';
 //import { open } from 'sqlite';
 import { Deck } from './deck.js';
+//import { game } from '../client/game_scripts/main.js';
 
 
 
@@ -17,7 +18,7 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, {
     connectionStateRecovery: {
-        maxDisconnectionDuration: 10000
+        //maxDisconnectionDuration: 10000
     },
     cors: {
         origin: ["https://admin.socket.io"],
@@ -72,10 +73,19 @@ io.on('connection', (socket) => {
     }
 
     socket.on('disconnect', () => {
+        console.log(roomID);
         console.log('user ' + userID + ' disconnected');
-        if (sessionStore.getRoomPlayerCount(roomID) === 0 && gameEnded == true) {
+        console.log('Player Count: ' + sessionStore.getRoomPlayerCount(roomID) + ', Game Ended: ' + gameEnded);
+        if (gameEnded == true) {
             sessionStore.removePlayerFromRoom(roomID, userID);
-            sessionStore.deleteRoom(roomID);
+        }
+        if (sessionStore.getRoomPlayerCount(roomID) === 1 && gameEnded == true) {
+            console.log('deleting session and room');
+            //sessionStore.removePlayerFromRoom(roomID, userID);
+            sessionStore.clearEndPiles(roomID);
+            sessionStore.setRoomInactive(roomID);
+            //sessionStore.deleteRoom(roomID);
+            sessionStore.deleteSession(userID);
         }
     });
 
@@ -160,7 +170,7 @@ io.on('connection', (socket) => {
 
     socket.on('checkGameOver', () => {
         const isGameOver = true; // logic to check if the game is over later
-        console.log('writing');
+        //console.log('writing');
         const room = sessionStore.getRoom(roomID);
         let demonPiles = [];
         room.players.forEach(playerID => {
@@ -247,7 +257,7 @@ function updateCards(allCards, centerPilesData, drawPileData, demonPileData, dec
         allCards.deckPile.push(allCards.deck.cards.find(card => card.name === deckPileData[i].name));
     }
 
-    console.log('updating');
+    //console.log('updating');
 }
 
 function createAllCards(playerId) {
@@ -272,11 +282,5 @@ function createAllCards(playerId) {
     allCards.deck.Deal(allCards.centerPiles, allCards.endPiles, allCards.demonPile, allCards.deckPile);
 
     return allCards;
-}
-
-function calculateScore(endPiles, demonPile) {
-    
-
-    return score;
 }
 

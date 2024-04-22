@@ -1,4 +1,4 @@
-//import Phaser, { GameObjects, Textures } from './phaser';
+//import Phaser, { GameObjects } from '../node_modules/phaser/dist/phaser.min.js';
 //import Card from './card.js';
 //import crypto from 'crypto';
 import { suits, values} from './card_config.js';
@@ -7,11 +7,7 @@ import { Deck } from './deck.js';
 import { createDeckBottom } from './deck_bottom.js';
 import { renderCards, renderEndCards } from './render.js';
 import { sendPiles, updatePiles, createAllCards, showGameOverPopup } from './card_scripts.js';
-/*import express from 'express';
-import { createServer } from 'node:http';
-import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
-import { Server } from 'socket.io';*/
+
 
 let gameTimer = 0;
 let timeSinceLastMove = 0;
@@ -60,13 +56,6 @@ socket.on('userJoined', (message) => {
 /*socket.onAnyOutgoing(() => {
    timeSinceLastMove = 0;
 });*/
-
-
-// Create multiple scenes with cameras rotated for each player, move socket methods out of the scene.add
-//   and the variables in the scene moved outside, unless I want it to be unoptimized as fuck.
-//   
-
-// let deckBottom = [];
 
 class Player1Scene extends Phaser.Scene {
    constructor() {
@@ -501,7 +490,7 @@ class Player1Scene extends Phaser.Scene {
       //console.log(this.playerID);
 
       timeSinceLastMove++;
-      if ((timeSinceLastMove % 20) === 0) { // Using 300 because higher tickrate is annoying, lower it later to 30
+      if ((timeSinceLastMove % 30) === 0) { // Using 300 because higher tickrate is annoying, lower it later to 30
          socket.emit('returnPiles');  // Fetches gamestate from server after 6 seconds of inactivity
          if (canRender === true && decks[0] !== undefined) {
             renderCards(this, allCards, allCards.deck.userID, centerPileX, centerPileY, endPileX, endPileY[0]);

@@ -1,11 +1,6 @@
 // All the scripts for rendering cards
 
 import { endPileY2, endPileY } from "./card_config.js";
-
-// This is more like what I will want to do, the server should be checking if a card goes on a stack,
-   //   and then sending back the new state of the game
-   // Or its just a socket.on for when the board state updates, but then ther probably needs to be more than one
-   //    function to update the board unless I want to waste a ton of the servers time
    
 export function renderCards(scene, allCards, userID, centerPileX, centerPileY, centerPileX2, centerPileY2) {
   // Add the deck sprite

@@ -39,13 +39,14 @@ export class InMemorySessionStore extends SessionStore {
   }
 
   getEndPiles (roomID) {
-    return this.rooms[roomID].endPiles;
+    const room = this.rooms.get(roomID);
+    return room ? room.endPiles : undefined;
   }
 
   setEndPile(roomID, i, j, card) {
     if (i >= 0 && i < 4 && j >= 0 && j < 4) {
-      console.log(this.rooms[roomID].endPiles[i][j]);
-      this.rooms[roomID].endPiles[i][j].push(card);
+      console.log(this.rooms.get(roomID).endPiles[i][j]);
+      this.rooms.get(roomID).endPiles[i][j].push(card);
     } else {
       throw new Error('Invalid end pile position');
     }
@@ -53,8 +54,8 @@ export class InMemorySessionStore extends SessionStore {
 
   createRoom(roomID) {
     // This is an Abomination
-    this.rooms[roomID] = { isActive: true, endPiles: [[[],[],[],[]],[[],[],[],[]],[[],[],[],[]],[[],[],[],[]]] };
-    console.log(this.rooms[roomID]);
+    this.rooms.set(roomID, { players: [], isActive: true, endPiles: [[[],[],[],[]],[[],[],[],[]],[[],[],[],[]],[[],[],[],[]]] });
+    //console.log(this.rooms[roomID]);
   }
 
   getRoom(roomID) {
@@ -62,16 +63,16 @@ export class InMemorySessionStore extends SessionStore {
   }
 
   isRoomActive(roomID) {
-    return this.rooms[roomID]?.isActive;
+    return this.rooms.get(roomID)?.isActive;
   }
 
   getRoomPlayerCount(roomID) {
-    return this.rooms[roomID]?.players?.length || 0;
+    return this.rooms.get(roomID)?.players?.length || 0;
   }
 
   addPlayerToRoom(roomID, playerID) {
     if (!this.rooms.has(roomID)) {
-        this.rooms.set(roomID, { players: [], isActive: true });
+        this.rooms.set(roomID, { players: [], isActive: true, endPiles: [[[],[],[],[]],[[],[],[],[]],[[],[],[],[]],[[],[],[],[]]] });
         console.log(this.rooms.get(roomID) + ' : ' + playerID);
     }
     const room = this.rooms.get(roomID);
@@ -79,6 +80,20 @@ export class InMemorySessionStore extends SessionStore {
         room.players.push(playerID);
     }
     console.log(`Room ${roomID} players: ${room.players.join(', ')}`);
+  }
+
+  clearEndPiles(roomID) {
+    const room = this.rooms.get(roomID);
+    if (room) {
+        room.endPiles = [];
+    }
+  }
+
+  setRoomInactive(roomID) {
+    const room = this.rooms.get(roomID);
+    if (room) {
+        room.isActive = false;
+    }
   }
 }
 /*module = {
