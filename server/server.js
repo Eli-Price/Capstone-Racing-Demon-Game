@@ -170,7 +170,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('checkGameOver', () => {
-        const isGameOver = true; // logic to check if the game is over later
+        let isGameOver = true; // logic to check if the game is over later
         //console.log('writing');
         const room = sessionStore.getRoom(roomID);
         let demonPiles = [];

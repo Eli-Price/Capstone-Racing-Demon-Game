@@ -1,6 +1,5 @@
-import { Phaser, Scene, AUTO, GameObjects, Scale, Game } from 'phaser';
+import * as Phaser from 'phaser'; //{ Phaser, Scene, AUTO, GameObjects, Scale, Game } from 'phaser';
 //import Card from './card.js';
-//import crypto from 'crypto';
 import { suits, values} from './card_config.js';
 import { centerPileX, centerPileY, endPileX, endPileY, centerPileX2, centerPileY2, endPileX2, endPileY2 } from './card_config.js';
 import { Deck } from './deck.js';
@@ -57,7 +56,7 @@ socket.on('userJoined', (message) => {
    timeSinceLastMove = 0;
 });*/
 
-class Player1Scene extends Scene {
+class Player1Scene extends Phaser.Scene {
    constructor() {
       super('Player1Scene');
       this.mousePositionText = null;
@@ -104,11 +103,26 @@ class Player1Scene extends Scene {
       this.scene.launch('Player2Scene');
       this.scene.launch('Player3Scene');
       this.scene.launch('Player4Scene');
-      
-
 
       this.cameras.main.setBackgroundColor('#408080');
       this.cameras.main.setViewport(25, 25, 650, 740);
+
+
+
+      const graphics = this.add.graphics({ fillStyle: { color: 0x106d6d } });
+
+      graphics.fillRect(0, 0, this.cameras.main.width, this.cameras.main.height);
+      graphics.fillStyle(0x408080, 1);
+      graphics.fillRoundedRect(0, 0, this.cameras.main.width, this.cameras.main.height, 20);
+      const mask = graphics.createGeometryMask();
+      mask.invertAlpha = true;
+
+      const frame = this.add.graphics({ fillStyle: { color: 0x408080 } });
+      frame.fillRect(0, 0, this.cameras.main.width, this.cameras.main.height);
+      frame.setMask(mask);
+      frame.setDepth(9999);
+
+
 
       createDeckBottom(this);
 
@@ -152,11 +166,10 @@ class Player1Scene extends Scene {
 
       
       this.children.each(child => {
-         if (typeof child.setScale === 'function') {
+         if (typeof child.setScale === 'function' && child.type !== 'Graphics') {
            child.setScale(0.75);
          }
       });
-      
 
       // Deal the cards, is here for the player scene only
       socket.emit('dealCards', userID);
@@ -190,9 +203,6 @@ class Player1Scene extends Scene {
                   playerIDs.push(allCards.deck.userID);
                }
             }
-            /*if (allCards.demonPile.length === 0) {
-               gameOver = true;
-            }*/
          });
 
          playerIDs.forEach(playerID => {
@@ -212,7 +222,7 @@ class Player1Scene extends Scene {
               this.decks.push(newDeck2);
             }
             //socket.emit('checkGameOver');
-            if (allCards.demonPile.length === 12 && gameOver === false) {
+            if (allCards.demonPile.length === 0 && gameOver === false) {
                socket.emit('checkGameOver');
             }
          });
@@ -269,8 +279,12 @@ class Player1Scene extends Scene {
          // Dupe code on variable declarations, probably could be cleaned up to be nicer
          // These nested ifs look like trash, should be cleaned up soon
          //   I really had no idea how bad my other code was gonna look when I wrote this huh
-         var mouseX = this.input.mousePointer.x;
-         var mouseY = this.input.mousePointer.y;
+
+         /*if (this.physics.world.hitTest(_pointer.x, _pointer.y, sprite.body)) {
+            
+         }*/
+         var mouseX = _pointer.x//this.input.mousePointer.x;
+         var mouseY = _pointer.y//this.input.mousePointer.y;
          if (mouseX >= 65 && mouseX <= 132 && mouseY >= 581 && mouseY <= 673) {
             let drawn = allCards.deck.drawCard(allCards.deckPile);
             if (drawn !== undefined) {
@@ -290,6 +304,10 @@ class Player1Scene extends Scene {
 
       this.input.on('drag', (_pointer, container, dragX, dragY) => {
          let allCards = decks.find(allCards => allCards.deck.userID === userID);
+
+         if (dragX < 0 || dragY < 0 || dragX > this.scale.width || dragY > this.scale.height) {
+            return;
+         }
 
          container.setData({x: container.x, y: container.y});
          container.x = dragX;
@@ -332,12 +350,13 @@ class Player1Scene extends Scene {
       this.input.on('dragend', (_pointer, container) => {
          // Find your own allCards object in decks to use
          let allCards = decks.find(allCards => allCards.deck.userID === userID);
-
          canRender = true;
 
-         var mouseX = this.input.mousePointer.x;
-         var mouseY = this.input.mousePointer.y;
+         var mouseX = _pointer.x;
+         var mouseY = _pointer.y;
          for (let i = 0; i < centerPileX.length; i++) {
+            /*let bottomCard = allCards.centerPiles[i][allCards.centerPiles[i].length - 1];
+            console.log(bottomCard.body);*/
             // Y Position modifiers are for the height of the pile
             if (mouseX >= centerPileX[i] - 44 && mouseX <= centerPileX[i] + 44 &&
                   mouseY >= centerPileY + ((allCards.centerPiles[i].length - 1) * 15) - 62 && 
@@ -578,7 +597,7 @@ class Player1Scene extends Scene {
 
 
 
-class Player2Scene extends Scene {
+class Player2Scene extends Phaser.Scene {
    constructor() {
       super('Player2Scene');
       this.mousePositionText = null;
@@ -595,6 +614,21 @@ class Player2Scene extends Scene {
    create() {
       this.cameras.main.setBackgroundColor('#408080');
       this.cameras.main.setViewport(700, 25, 365, 230);
+
+
+      const graphics = this.add.graphics({ fillStyle: { color: 0x106d6d } });
+
+      graphics.fillRect(0, 0, this.cameras.main.width, this.cameras.main.height);
+      graphics.fillStyle(0x408080, 1);
+      graphics.fillRoundedRect(0, 0, this.cameras.main.width, this.cameras.main.height, 20);
+      const mask = graphics.createGeometryMask();
+      mask.invertAlpha = true;
+
+      const frame = this.add.graphics({ fillStyle: { color: 0x408080 } });
+      frame.fillRect(0, 0, this.cameras.main.width, this.cameras.main.height);
+      frame.setMask(mask);
+      frame.setDepth(9999);
+
 
       createDeckBottom(this);
 
@@ -614,7 +648,7 @@ class Player2Scene extends Scene {
       //deckSprite.setScale(0.75);
 
       this.children.each(child => {
-         if (typeof child.setScale === 'function') {
+         if (typeof child.setScale === 'function' && child.type !== 'Graphics') {
            child.setScale(0.5);
          }
       });
@@ -650,7 +684,7 @@ class Player2Scene extends Scene {
 }
 
 
-class Player3Scene extends Scene {
+class Player3Scene extends Phaser.Scene {
    constructor() {
       super('Player3Scene');
       this.mousePositionText = null;
@@ -667,6 +701,21 @@ class Player3Scene extends Scene {
    create() {
       this.cameras.main.setBackgroundColor('#408080');
       this.cameras.main.setViewport(700, 280, 365, 230);
+
+
+      const graphics = this.add.graphics({ fillStyle: { color: 0x106d6d } });
+
+      graphics.fillRect(0, 0, this.cameras.main.width, this.cameras.main.height);
+      graphics.fillStyle(0x408080, 1);
+      graphics.fillRoundedRect(0, 0, this.cameras.main.width, this.cameras.main.height, 20);
+      const mask = graphics.createGeometryMask();
+      mask.invertAlpha = true;
+
+      const frame = this.add.graphics({ fillStyle: { color: 0x408080 } });
+      frame.fillRect(0, 0, this.cameras.main.width, this.cameras.main.height);
+      frame.setMask(mask);
+      frame.setDepth(9999);
+
 
       createDeckBottom(this);
 
@@ -686,7 +735,7 @@ class Player3Scene extends Scene {
       //deckSprite.setScale(0.75);
 
       this.children.each(child => {
-         if (typeof child.setScale === 'function') {
+         if (typeof child.setScale === 'function' && child.type !== 'Graphics') {
            child.setScale(0.5);
          }
       });
@@ -721,7 +770,7 @@ class Player3Scene extends Scene {
 }
 
 
-class Player4Scene extends Scene {
+class Player4Scene extends Phaser.Scene {
    constructor() {
       super('Player4Scene');
       this.mousePositionText = null;
@@ -738,6 +787,21 @@ class Player4Scene extends Scene {
    create() {
       this.cameras.main.setBackgroundColor('#408080');
       this.cameras.main.setViewport(700, 535, 365, 230);
+
+
+      const graphics = this.add.graphics({ fillStyle: { color: 0x106d6d } });
+
+      graphics.fillRect(0, 0, this.cameras.main.width, this.cameras.main.height);
+      graphics.fillStyle(0x408080, 1);
+      graphics.fillRoundedRect(0, 0, this.cameras.main.width, this.cameras.main.height, 20);
+      const mask = graphics.createGeometryMask();
+      mask.invertAlpha = true;
+
+      const frame = this.add.graphics({ fillStyle: { color: 0x408080 } });
+      frame.fillRect(0, 0, this.cameras.main.width, this.cameras.main.height);
+      frame.setMask(mask);
+      frame.setDepth(9999);
+
 
       createDeckBottom(this);
 
@@ -757,7 +821,7 @@ class Player4Scene extends Scene {
       //deckSprite.setScale(0.75);
 
       this.children.each(child => {
-         if (typeof child.setScale === 'function') {
+         if (typeof child.setScale === 'function' && child.type !== 'Graphics') {
            child.setScale(0.5);
          }
       });
@@ -791,31 +855,29 @@ class Player4Scene extends Scene {
    }
 }
 
-//const randomId = () => crypto.randomBytes(8).toString("hex");
-
 
 const config = {
-   type: AUTO,
+   type: Phaser.AUTO,
    scene: [Player1Scene, Player2Scene, Player3Scene, Player4Scene],
    parent: 'game',
+   backgroundColor: '#106d6d',
    scale: {
       width: 1090,
       height: 790,
-      mode: /*Phaser.*/Scale.NONE,
+      mode: Phaser.Scale.NONE,
       //autoCenter: Phaser.Scale.CENTER_BOTH,
    },
    mipmapFilter: 'LINEAR_MIPMAP_NEAREST',
    physics: {
       default: 'arcade',
       arcade: {
-         debug: false,
+         debug: true,
       },
    },
 };
 
 
-
-export const game = new /*Phaser.*/Game(config);
+export const game = new Phaser.Game(config);
 
 
 

@@ -98,13 +98,13 @@ export function renderCards(scene, allCards, userID, centerPileX, centerPileY, c
   //scene.cameras.main.rotation = 2 * 3.1415926/2;\
   if (isOwnDeck) {
     scene.children.each(child => {
-      if (typeof child.setScale === 'function') {
+      if (typeof child.setScale === 'function'  && child.type !== 'Graphics') {
         child.setScale(0.75);
       }
     });
   } else {
     scene.children.each(child => {
-      if (typeof child.setScale === 'function') {
+      if (typeof child.setScale === 'function'  && child.type !== 'Graphics') {
         child.setScale(0.5);
       }
     });
