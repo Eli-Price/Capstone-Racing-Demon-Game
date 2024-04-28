@@ -383,6 +383,7 @@ class Player1Scene extends Phaser.Scene {
                      }
                      // Add the card to the end pile
                      allCards.endPiles[i].push(container);
+                     decks[0].endPiles[i].push(container);
                      //decks[0].allCards.endPiles[i].push(container);
 
                      // Store a reference to the new pile in the card
@@ -412,6 +413,7 @@ class Player1Scene extends Phaser.Scene {
                         }
                         // Add the card to the end pile
                         allCards.endPiles[i].push(container);
+                        decks[1].endPiles[i].push(container);
                         //decks[1].allCards.endPiles[i].push(container);
       
                         // Store a reference to the new pile in the card
@@ -444,6 +446,7 @@ class Player1Scene extends Phaser.Scene {
                            }
                            // Add the card to the end pile
                            allCards.endPiles[i].push(container);
+                           decks[2].endPiles[i].push(container);
                            //decks[2].allCards.endPiles[i].push(container);
          
                            // Store a reference to the new pile in the card
@@ -477,6 +480,7 @@ class Player1Scene extends Phaser.Scene {
                         
                         // Add the card to the end pile
                         allCards.endPiles[i].push(container);
+                        decks[3].endPiles[i].push(container);
                         //decks[3].allCards.endPiles[i].push(container);
 
                         // Store a reference to the new pile in the card
@@ -525,8 +529,8 @@ class Player1Scene extends Phaser.Scene {
       //console.log(this.playerID);
 
       timeSinceLastMove++;
-      if ((timeSinceLastMove % 20) === 0) { // Using 300 because higher tickrate is annoying, lower it later to 30
-         socket.emit('returnPiles');  // Fetches gamestate from server after 6 seconds of inactivity
+      if ((timeSinceLastMove % 10) === 0) {
+         socket.emit('returnPiles');  
          if (canRender === true && decks[0] !== undefined) {
             renderCards(this, allCards, allCards.deck.userID, centerPileX, centerPileY, endPileX, endPileY[0], allEndPiles);
             renderEndCards(this, decks, endPileX, endPileY[0]);
