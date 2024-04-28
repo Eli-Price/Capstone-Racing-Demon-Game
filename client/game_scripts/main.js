@@ -279,9 +279,6 @@ class Player1Scene extends Phaser.Scene {
       // Functions happen on clicking on deck, should be converted to an event listener
       this.input.on('pointerdown', (_pointer) => {
          let allCards = decks.find(allCards => allCards.deck.userID === userID);
-         // Dupe code on variable declarations, probably could be cleaned up to be nicer
-         // These nested ifs look like trash, should be cleaned up soon
-         //   I really had no idea how bad my other code was gonna look when I wrote this huh
          var mouseX = _pointer.x;
          var mouseY = _pointer.y;
          if (mouseX >= 65 && mouseX <= 132 && mouseY >= 581 && mouseY <= 673) {
@@ -336,6 +333,7 @@ class Player1Scene extends Phaser.Scene {
                container.getData('pile')[i].setDepth(60000 + i);
             }
          }
+
          // Save the original position at the start of the drag
          container.setData('originX', container.x);
          container.setData('originY', container.y);
@@ -392,7 +390,8 @@ class Player1Scene extends Phaser.Scene {
 
                      let card = this.simplifyCard(container.getAt(2));
                      socket.emit('sendEndCard', card, 0, i);
-                     //socket.emit('returnPiles');
+                     timeSinceLastMove = 0;
+                     socket.emit('returnPiles');
                      
                      //renderEndCards(this, this.decks, endPileX, endPileY);
 
@@ -420,7 +419,8 @@ class Player1Scene extends Phaser.Scene {
 
                         let card = this.simplifyCard(container.getAt(2));
                         socket.emit('sendEndCard', card, 1, i);
-                        //socket.emit('returnPiles');
+                        timeSinceLastMove = 0;
+                        socket.emit('returnPiles');
 
                         //renderEndCards(this, this.decks, endPileX, endPileY);
 
@@ -451,7 +451,8 @@ class Player1Scene extends Phaser.Scene {
 
                            let card = this.simplifyCard(container.getAt(2));
                            socket.emit('sendEndCard', card, 2, i);
-                           //socket.emit('returnPiles');
+                           timeSinceLastMove = 0;
+                           socket.emit('returnPiles');
 
                            //renderEndCards(this, this.decks, endPileX, endPileY);
 
@@ -483,7 +484,8 @@ class Player1Scene extends Phaser.Scene {
 
                         let card = this.simplifyCard(container.getAt(2));
                         socket.emit('sendEndCard', card, 3, i);
-                        //socket.emit('returnPiles');
+                        timeSinceLastMove = 0;
+                        socket.emit('returnPiles');
 
                         //renderEndCards(this, this.decks, endPileX, endPileY);
 
