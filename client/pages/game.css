@@ -1,0 +1,11 @@
+html, body, #game {
+    height: 1090px;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    /*background-image: url('../assets/brown-wood-textured-background-min.jpg');*/
+    background-repeat: no-repeat;
+    background-size: cover;
+}

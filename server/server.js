@@ -35,10 +35,9 @@ const sessionStore = new InMemorySessionStore();
 const __dirname = dirname(fileURLToPath(import.meta.url));
 //console.log(__dirname);
 
-// I'm not really sure if I should use these, don't know yet. Will need to change quite a bit if I don't, I think.
-//  maybe it's bad practice, but gonna use it for now.
+// serve static files
 app.use(express.static(path.join(__dirname, '../client')));
-console.log(path.join(__dirname, '../client'));
+//console.log(path.join(__dirname, '../client'));
 app.use(express.static(path.join(__dirname, '../dist')));
 app.use(express.static(path.join(__dirname, '../assets')));
 
@@ -116,7 +115,7 @@ io.on('connection', (socket) => {
             return session.allCards;
         });
         // Sends out all piles, and ID of the player sending them
-        socket.to(roomID).emit('recievePiles', userID, allPlayersCards, endPiles);
+        socket.emit('recievePiles', userID, allPlayersCards, endPiles);
     });
 
     socket.on('sendPiles', (centerPilesData, drawPileData, demonPileData, deckPileData) => {
@@ -230,7 +229,7 @@ server.listen(PORT, () => {
 });
 
 
-function updateCards(allCards, centerPilesData, drawPileData, demonPileData, deckPileData) {
+function updateCards(allCards, centerPilesData, drawPileData, /*endPileData,*/ demonPileData, deckPileData) {
     // This is very functional now
 
     // Clear the existing arrays
@@ -248,6 +247,11 @@ function updateCards(allCards, centerPilesData, drawPileData, demonPileData, dec
             allCards.centerPiles[i].push(allCards.deck.cards.find(card => card.name === centerPilesData[i][j].name));
         }
     }
+    /*for (let i = 0; i < centerPilesData.length; i++) {
+        for (let j = 0; j < centerPilesData[i].length; j++) {
+            allCards.centerPiles[i].push(allCards.deck.cards.find(card => card.name === centerPilesData[i][j].name));
+        }
+    }*/
     for (let i = 0; i < drawPileData.length; i++) {
         allCards.drawPile.push(allCards.deck.cards.find(card => card.name === drawPileData[i].name));
     }
@@ -271,6 +275,11 @@ function createAllCards(playerId) {
         centerPile3 : [],
         centerPile4 : [],
 
+        /*endPile1 : [],
+        endPile2 : [],
+        endPile3 : [],
+        endPile4 : [],*/
+
         drawPile : [],
         demonPile : [],
         deckPile : [],
@@ -279,6 +288,7 @@ function createAllCards(playerId) {
     }
 
     allCards.centerPiles = [allCards.centerPile1, allCards.centerPile2, allCards.centerPile3, allCards.centerPile4];
+    // allCards.endPiles = [allCards.endPile1, allCards.endPile2, allCards.endPile3, allCards.endPile4];
 
     allCards.deck.Deal(allCards.centerPiles, allCards.endPiles, allCards.demonPile, allCards.deckPile);
 

@@ -25,17 +25,6 @@ export function sendPiles(scene, allCards) {
      }
   };
 
-  /*for (let i = 0; i < allCards.endPiles.length; i++) {
-     for (let j = 0; j < allCards.endPiles[i].length; j++) {
-        let pileData = {name : '', suit : 0, value : 0};
-        pileData.name = allCards.endPiles[i][j].getAt(2).name;
-        pileData.suit = allCards.endPiles[i][j].getAt(2).suit;
-        pileData.value = allCards.endPiles[i][j].getAt(2).value;
-
-        endPilesData[i][j] = pileData;
-     }
-  };*/
-
   for (let i = 0; i < allCards.drawPile.length; i++) {
      let pileData = {name : '', suit : 0, value : 0};
      pileData.name = allCards.drawPile[i].getAt(2).name;
@@ -63,14 +52,13 @@ export function sendPiles(scene, allCards) {
      deckPileData[i] = pileData;
   };
 
-  socket.emit('sendPiles', centerPilesData, /*endPilesData, */drawPileData, demonPileData, deckPileData);
+  socket.emit('sendPiles', centerPilesData, drawPileData, demonPileData, deckPileData);
 }
 
 // Recieves the gamestate sent from the server and updates the client
 //   This has a few to many parameters for my liking, but it is probably the best way
 export function updatePiles(scene, allCards, deck, centerPilesData, endPilesData, drawPileData, 
                               demonPileData, deckPileData, canRender) {
-  //console.log(centerPilesData);
 
   // Clear the existing arrays
   allCards.centerPile1.length = 0;
@@ -152,12 +140,7 @@ export function showGameOverPopup(p1Score, p2Score, p3Score, p4Score, winnerID, 
 
   console.log('writing');
 
-
-  /*if (winnerID === userID) {
-    console.log("You won!");
-  } else {
-    console.log("You lost. The winner is player " + winnerID);
-  }*/
+  
 
   // Create a p element for the game over message
   let message = document.createElement('p');

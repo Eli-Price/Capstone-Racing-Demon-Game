@@ -2,12 +2,12 @@
 
 import { endPileY2, endPileY } from "./card_config.js";
    
-export function renderCards(scene, allCards, userID, centerPileX, centerPileY, centerPileX2, centerPileY2) {
+export function renderCards(scene, allCards, userID, centerPileX, centerPileY, centerPileX2, centerPileY2, endPiles) {
   // Add the deck sprite
   let playerID = localStorage.getItem('userID');
   let isOwnDeck = playerID === userID;
 
-
+  
   // Clears any cards that shouldn't be visible in the drawPile
   //console.log(allCards.deck.cards);
   allCards.deck.cards.forEach(card => {
@@ -17,6 +17,12 @@ export function renderCards(scene, allCards, userID, centerPileX, centerPileY, c
       card.x = 0;
     }
 
+    
+    if (!isOwnDeck) {
+      card.getAt(0).setVisible(false);
+    }
+
+    //console.log(endPiles);
     allCards.endPiles.forEach(endPile => {
       if (endPile.includes(card)) {
         card.getAt(0).setVisible(false);
@@ -24,10 +30,13 @@ export function renderCards(scene, allCards, userID, centerPileX, centerPileY, c
         card.x = 0;
       }
     });
-     //console.log(scene.children);
+
+
+    //console.log(scene.children);
   });
   
   // Draw each card at its appropriate position for centerPiles
+  //console.log(allCards.centerPiles);
   for (let i = 0; i < allCards.centerPiles.length; i++) {
      for (let j = 0; j < allCards.centerPiles[i].length; j++) {
         let card = allCards.centerPiles[i][j];
@@ -60,7 +69,7 @@ export function renderCards(scene, allCards, userID, centerPileX, centerPileY, c
       //}
       if (!isOwnDeck) {
         card.x = 105;
-        card.y = centerPileY2;
+        card.y = endPileY2 + 82;
       } else {
         card.x = 156;
         card.y = centerPileY + 120;
@@ -83,7 +92,7 @@ export function renderCards(scene, allCards, userID, centerPileX, centerPileY, c
     }
     if (!isOwnDeck) {
       card.x = 105;
-      card.y = endPileY2 + 82;
+      card.y = centerPileY2; //endPileY2 + 82;
     } else {
       card.x = 156;
       card.y = endPileY[0] + 80;

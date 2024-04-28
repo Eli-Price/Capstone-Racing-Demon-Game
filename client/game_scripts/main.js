@@ -14,6 +14,7 @@ let canRender = true;
 let gameOver = false;
 let decks = [];
 let playerIDs = [];
+let allEndPiles = [];
 
 const roomID = localStorage.getItem('roomID');
 const userID = localStorage.getItem('userID');
@@ -126,13 +127,14 @@ class Player1Scene extends Phaser.Scene {
 
       createDeckBottom(this);
 
-      this.mousePositionText = this.add.text(5, 5, '', { font: '16px Courier', fill: '#ffffff' });
+      //this.mousePositionText = this.add.text(5, 5, '', { font: '16px Courier', fill: '#ffffff' });
       this.demonPileCount = this.add.text(149, 422, '', { font: '16px Courier', fill: '#ffffff' });
       this.deckPileCount = this.add.text(69, 539, '', { font: '16px Courier', fill: '#ffffff' });
 
       // Draw the places cards can be placed
       for (let i = 0; i < centerPileX.length; i++) {
          this.deckBottom.push(this.add.sprite(centerPileX[i], centerPileY - 104, 'cards' + suits[i], 0).setTint(0x408080));
+         //console.log(this.deckBottom.at(-1).setData('name', 'endPiles' + suits[i]));
          this.deckBottom[i].setDepth(0);
       }
       for (let i = 0; i < centerPileX.length; i++) {
@@ -173,8 +175,7 @@ class Player1Scene extends Phaser.Scene {
 
       // Deal the cards, is here for the player scene only
       socket.emit('dealCards', userID);
-
-      //socket.emit('returnPiles');
+      socket.emit('returnPiles'); // fetch inital gamestate on join
 
       socket.on('gameOver', (data) => {
          const p1Score = data.scores[0];
@@ -195,6 +196,8 @@ class Player1Scene extends Phaser.Scene {
 
       socket.on('recievePiles', (userID, allPlayersCards, endPiles) => {
          // console.log(endPilesData);
+         allEndPiles = endPiles;
+         //console.log(allEndPiles);
       
          allPlayersCards.forEach(allCards => {
             let foundDeck = decks.find(aDeck => aDeck.deck.userID === allCards.deck.userID);
@@ -238,7 +241,7 @@ class Player1Scene extends Phaser.Scene {
             }
           
             let foundDeck = decks.find(aDeck => aDeck.deck.userID === allCards.deck.userID);
-            let foundDeck2 = this.decks[count];
+            //let foundDeck2 = this.decks[count];
             //console.log(foundDeck);
             let endPilesData = endPiles[count];
             //console.log(endPilesData);
@@ -279,12 +282,8 @@ class Player1Scene extends Phaser.Scene {
          // Dupe code on variable declarations, probably could be cleaned up to be nicer
          // These nested ifs look like trash, should be cleaned up soon
          //   I really had no idea how bad my other code was gonna look when I wrote this huh
-
-         /*if (this.physics.world.hitTest(_pointer.x, _pointer.y, sprite.body)) {
-            
-         }*/
-         var mouseX = _pointer.x//this.input.mousePointer.x;
-         var mouseY = _pointer.y//this.input.mousePointer.y;
+         var mouseX = _pointer.x;
+         var mouseY = _pointer.y;
          if (mouseX >= 65 && mouseX <= 132 && mouseY >= 581 && mouseY <= 673) {
             let drawn = allCards.deck.drawCard(allCards.deckPile);
             if (drawn !== undefined) {
@@ -298,16 +297,16 @@ class Player1Scene extends Phaser.Scene {
             }
             sendPiles(this, allCards);
             //renderEndCards(this, this.decks, endPileX, endPileY);
-            renderCards(this, allCards, userID, centerPileX, centerPileY, endPileX, endPileY[0]);
+            renderCards(this, allCards, userID, centerPileX, centerPileY, endPileX, endPileY[0], allEndPiles);
          }
       });
 
       this.input.on('drag', (_pointer, container, dragX, dragY) => {
          let allCards = decks.find(allCards => allCards.deck.userID === userID);
 
-         if (dragX < 0 || dragY < 0 || dragX > this.scale.width || dragY > this.scale.height) {
+         /*if (this.scene.key !== this.scene.manager.getActiveScene().key) {
             return;
-         }
+         }*/
 
          container.setData({x: container.x, y: container.y});
          container.x = dragX;
@@ -330,13 +329,11 @@ class Player1Scene extends Phaser.Scene {
          let allCards = decks.find(allCards => allCards.deck.userID === userID);
          canRender = false;
 
-         console.log(container.getAt(2).name)
-
          if (container.getData('pile') === allCards.drawPile) {
-            container.setDepth(60);
+            container.getAt(0).setDepth(Infinity);
          } else {
             for (let i = 0; i < container.getData('pile').length; i++) {
-               container.getData('pile')[i].setDepth(60 + i);
+               container.getData('pile')[i].setDepth(60000 + i);
             }
          }
          // Save the original position at the start of the drag
@@ -351,9 +348,10 @@ class Player1Scene extends Phaser.Scene {
          // Find your own allCards object in decks to use
          let allCards = decks.find(allCards => allCards.deck.userID === userID);
          canRender = true;
+         container.setDepth();
 
-         var mouseX = _pointer.x;
-         var mouseY = _pointer.y;
+         var mouseX = _pointer.x - 25;
+         var mouseY = _pointer.y - 25;
          for (let i = 0; i < centerPileX.length; i++) {
             /*let bottomCard = allCards.centerPiles[i][allCards.centerPiles[i].length - 1];
             console.log(bottomCard.body);*/
@@ -387,12 +385,16 @@ class Player1Scene extends Phaser.Scene {
                      }
                      // Add the card to the end pile
                      allCards.endPiles[i].push(container);
+                     //decks[0].allCards.endPiles[i].push(container);
 
                      // Store a reference to the new pile in the card
                      container.setData('pile', allCards.endPiles[i]);
 
                      let card = this.simplifyCard(container.getAt(2));
                      socket.emit('sendEndCard', card, 0, i);
+                     //socket.emit('returnPiles');
+                     
+                     //renderEndCards(this, this.decks, endPileX, endPileY);
 
                      break;
                   }
@@ -411,12 +413,16 @@ class Player1Scene extends Phaser.Scene {
                         }
                         // Add the card to the end pile
                         allCards.endPiles[i].push(container);
+                        //decks[1].allCards.endPiles[i].push(container);
       
                         // Store a reference to the new pile in the card
                         container.setData('pile', allCards.endPiles[i]);
 
                         let card = this.simplifyCard(container.getAt(2));
                         socket.emit('sendEndCard', card, 1, i);
+                        //socket.emit('returnPiles');
+
+                        //renderEndCards(this, this.decks, endPileX, endPileY);
 
                         break;  
                      }
@@ -438,12 +444,16 @@ class Player1Scene extends Phaser.Scene {
                            }
                            // Add the card to the end pile
                            allCards.endPiles[i].push(container);
+                           //decks[2].allCards.endPiles[i].push(container);
          
                            // Store a reference to the new pile in the card
                            container.setData('pile', allCards.endPiles[i]);
 
                            let card = this.simplifyCard(container.getAt(2));
                            socket.emit('sendEndCard', card, 2, i);
+                           //socket.emit('returnPiles');
+
+                           //renderEndCards(this, this.decks, endPileX, endPileY);
 
                            break;
                         }
@@ -466,12 +476,16 @@ class Player1Scene extends Phaser.Scene {
                         
                         // Add the card to the end pile
                         allCards.endPiles[i].push(container);
+                        //decks[3].allCards.endPiles[i].push(container);
 
                         // Store a reference to the new pile in the card
                         container.setData('pile', allCards.endPiles[i]);
 
                         let card = this.simplifyCard(container.getAt(2));
                         socket.emit('sendEndCard', card, 3, i);
+                        //socket.emit('returnPiles');
+
+                        //renderEndCards(this, this.decks, endPileX, endPileY);
 
                         break;
                      }
@@ -483,7 +497,7 @@ class Player1Scene extends Phaser.Scene {
          sendPiles(this, decks[0]);
          //setInterval(() => {}, 120);
 
-         renderCards(this, allCards, allCards.deck.userID, centerPileX, centerPileY, endPileX, endPileY[0]);
+         renderCards(this, allCards, allCards.deck.userID, centerPileX, centerPileY, endPileX, endPileY[0], allEndPiles);
          //renderEndCards(this, this.decks, endPileX, endPileY);
          
       });
@@ -496,7 +510,7 @@ class Player1Scene extends Phaser.Scene {
       var mouseY = this.input.mousePointer.y;
       mouseX = mouseX | 0;
       mouseY = mouseY | 0;
-      this.mousePositionText.setText(`Mouse Position: (${mouseX}, ${mouseY})`);
+      // this.mousePositionText.setText(`Mouse Position: (${mouseX}, ${mouseY})`);
       if (allCards !== undefined) {
          this.demonPileCount.setText(`${allCards.demonPile.length}`);
          this.deckPileCount.setText(`${allCards.deckPile.length}`);
@@ -509,10 +523,10 @@ class Player1Scene extends Phaser.Scene {
       //console.log(this.playerID);
 
       timeSinceLastMove++;
-      if ((timeSinceLastMove % 30) === 0) { // Using 300 because higher tickrate is annoying, lower it later to 30
+      if ((timeSinceLastMove % 20) === 0) { // Using 300 because higher tickrate is annoying, lower it later to 30
          socket.emit('returnPiles');  // Fetches gamestate from server after 6 seconds of inactivity
          if (canRender === true && decks[0] !== undefined) {
-            renderCards(this, allCards, allCards.deck.userID, centerPileX, centerPileY, endPileX, endPileY[0]);
+            renderCards(this, allCards, allCards.deck.userID, centerPileX, centerPileY, endPileX, endPileY[0], allEndPiles);
             renderEndCards(this, decks, endPileX, endPileY[0]);
         }
       }
@@ -632,18 +646,21 @@ class Player2Scene extends Phaser.Scene {
 
       createDeckBottom(this);
 
-      this.mousePositionText = this.add.text(5, 5, '', { font: '16px Courier', fill: '#ffffff' });
-      this.demonPileCount = this.add.text(110, 107, '', { font: '16px Courier', fill: '#ffffff' });
-      this.deckPileCount = this.add.text(46, 20, '', { font: '16px Courier', fill: '#ffffff' });
+      // this.mousePositionText = this.add.text(5, 5, '', { font: '16px Courier', fill: '#ffffff' });
+      this.demonPileCount = this.add.text(100, 20, '', { font: '16px Courier', fill: '#ffffff' });
+      this.deckPileCount = this.add.text(44, 94, '', { font: '16px Courier', fill: '#ffffff' });
 
       for (let i = 0; i < centerPileX2.length; i++) {
          this.deckBottom.push(this.add.sprite(centerPileX2[i], centerPileY2, 'deckBottomTexture'));
       }
-      this.deckBottom.push(this.add.sprite(50, endPileY2, 'deckBottomTexture'));
-      this.deckBottom.push(this.add.sprite(104, endPileY2 + 82, 'deckBottomTexture'));
-      this.deckBottom.push(this.add.sprite(104, centerPileY2, 'deckBottomTexture'));
+      // Deck
+      this.deckBottom.push(this.add.sprite(50, endPileY2 + 82, 'deckBottomTexture'));
+      // Demon
+      this.deckBottom.push(this.add.sprite(106, endPileY2 + 82, 'deckBottomTexture'));
+      // Draw
+      this.deckBottom.push(this.add.sprite(106, centerPileY2, 'deckBottomTexture'));
 
-      let deckSprite = this.add.sprite(50, 60, 'cardsDecks', 1);
+      let deckSprite = this.add.sprite(50, 146, 'cardsDecks', 1);
       deckSprite.setInteractive();
       //deckSprite.setScale(0.75);
 
@@ -663,7 +680,7 @@ class Player2Scene extends Phaser.Scene {
       var mouseY = this.input.mousePointer.y;
       mouseX = mouseX | 0;
       mouseY = mouseY | 0;
-      this.mousePositionText.setText(`Mouse Position: (${mouseX}, ${mouseY})`);
+      // this.mousePositionText.setText(`Mouse Position: (${mouseX}, ${mouseY})`);
       if (allCards !== undefined) {
          this.demonPileCount.setText(`${allCards.demonPile.length}`);
          this.deckPileCount.setText(`${allCards.deckPile.length}`);
@@ -677,7 +694,7 @@ class Player2Scene extends Phaser.Scene {
       if ((timeSinceLastMove % 120) === 0) { // 2 seconds to update non player scenes
          if (canRender === true && decks[1] !== undefined) {
             let allCards = decks[1];
-            renderCards(this, allCards, allCards.deck.userID, centerPileX2, centerPileY2, endPileX2, endPileY2);
+            renderCards(this, allCards, allCards.deck.userID, centerPileX2, centerPileY2, endPileX2, endPileY2, allEndPiles);
          }
       }
    }
@@ -719,18 +736,21 @@ class Player3Scene extends Phaser.Scene {
 
       createDeckBottom(this);
 
-      this.mousePositionText = this.add.text(5, 5, '', { font: '16px Courier', fill: '#ffffff' });
-      this.demonPileCount = this.add.text(110, 107, '', { font: '16px Courier', fill: '#ffffff' });
-      this.deckPileCount = this.add.text(46, 20, '', { font: '16px Courier', fill: '#ffffff' });
+      // this.mousePositionText = this.add.text(5, 5, '', { font: '16px Courier', fill: '#ffffff' });
+      this.demonPileCount = this.add.text(100, 20, '', { font: '16px Courier', fill: '#ffffff' });
+      this.deckPileCount = this.add.text(44, 94, '', { font: '16px Courier', fill: '#ffffff' });
 
       for (let i = 0; i < centerPileX2.length; i++) {
          this.deckBottom.push(this.add.sprite(centerPileX2[i], centerPileY2, 'deckBottomTexture'));
       }
-      this.deckBottom.push(this.add.sprite(50, endPileY2, 'deckBottomTexture'));
-      this.deckBottom.push(this.add.sprite(115, endPileY2, 'deckBottomTexture'));
-      this.deckBottom.push(this.add.sprite(115, centerPileY2, 'deckBottomTexture'));
+      // Deck
+      this.deckBottom.push(this.add.sprite(50, endPileY2 + 82, 'deckBottomTexture'));
+      // Demon
+      this.deckBottom.push(this.add.sprite(106, endPileY2 + 82, 'deckBottomTexture'));
+      // Draw
+      this.deckBottom.push(this.add.sprite(106, centerPileY2, 'deckBottomTexture'));
 
-      let deckSprite = this.add.sprite(50, 63, 'cardsDecks', 1);
+      let deckSprite = this.add.sprite(50, 146, 'cardsDecks', 1);
       deckSprite.setInteractive();
       //deckSprite.setScale(0.75);
 
@@ -750,7 +770,7 @@ class Player3Scene extends Phaser.Scene {
       var mouseY = this.input.mousePointer.y;
       mouseX = mouseX | 0;
       mouseY = mouseY | 0;
-      this.mousePositionText.setText(`Mouse Position: (${mouseX}, ${mouseY})`);
+      // this.mousePositionText.setText(`Mouse Position: (${mouseX}, ${mouseY})`);
       if (allCards !== undefined) {
          this.demonPileCount.setText(`${allCards.demonPile.length}`);
          this.deckPileCount.setText(`${allCards.deckPile.length}`);
@@ -763,7 +783,7 @@ class Player3Scene extends Phaser.Scene {
       //timeSinceLastMove++;
       if ((timeSinceLastMove % 120) === 0) { // 2 seconds to update non player scenes
          if (canRender === true && decks[2] !== undefined) {
-            renderCards(this, allCards, allCards.deck.userID, centerPileX2, centerPileY2, endPileX2, endPileY2);
+            renderCards(this, allCards, allCards.deck.userID, centerPileX2, centerPileY2, endPileX2, endPileY2, allEndPiles);
          }
       }
    }
@@ -805,18 +825,21 @@ class Player4Scene extends Phaser.Scene {
 
       createDeckBottom(this);
 
-      this.mousePositionText = this.add.text(5, 5, '', { font: '16px Courier', fill: '#ffffff' });
-      this.demonPileCount = this.add.text(110, 107, '', { font: '16px Courier', fill: '#ffffff' });
-      this.deckPileCount = this.add.text(46, 20, '', { font: '16px Courier', fill: '#ffffff' });
+      //this.mousePositionText = this.add.text(5, 5, '', { font: '16px Courier', fill: '#ffffff' });
+      this.demonPileCount = this.add.text(100, 20, '', { font: '16px Courier', fill: '#ffffff' });
+      this.deckPileCount = this.add.text(44, 94, '', { font: '16px Courier', fill: '#ffffff' });
 
       for (let i = 0; i < centerPileX2.length; i++) {
          this.deckBottom.push(this.add.sprite(centerPileX2[i], centerPileY2, 'deckBottomTexture'));
       }
-      this.deckBottom.push(this.add.sprite(50, endPileY2, 'deckBottomTexture'));
-      this.deckBottom.push(this.add.sprite(115, endPileY2, 'deckBottomTexture'));
-      this.deckBottom.push(this.add.sprite(115, centerPileY2, 'deckBottomTexture'));
+      // Deck
+      this.deckBottom.push(this.add.sprite(50, endPileY2 + 82, 'deckBottomTexture'));
+      // Demon
+      this.deckBottom.push(this.add.sprite(106, endPileY2 + 82, 'deckBottomTexture'));
+      // Draw
+      this.deckBottom.push(this.add.sprite(106, centerPileY2, 'deckBottomTexture'));
 
-      let deckSprite = this.add.sprite(50, 63, 'cardsDecks', 1);
+      let deckSprite = this.add.sprite(50, 146, 'cardsDecks', 1);
       deckSprite.setInteractive();
       //deckSprite.setScale(0.75);
 
@@ -836,7 +859,7 @@ class Player4Scene extends Phaser.Scene {
       var mouseY = this.input.mousePointer.y;
       mouseX = mouseX | 0;
       mouseY = mouseY | 0;
-      this.mousePositionText.setText(`Mouse Position: (${mouseX}, ${mouseY})`);
+      // this.mousePositionText.setText(`Mouse Position: (${mouseX}, ${mouseY})`);
       if (allCards !== undefined) {
          this.demonPileCount.setText(`${allCards.demonPile.length}`);
          this.deckPileCount.setText(`${allCards.deckPile.length}`);
@@ -849,7 +872,7 @@ class Player4Scene extends Phaser.Scene {
       //timeSinceLastMove++;
       if ((timeSinceLastMove % 120) === 0) { // 2 seconds to update non player scenes
          if (canRender === true && decks[3] !== undefined) {
-            renderCards(this, allCards, allCards.deck.userID, centerPileX2, centerPileY2, endPileX2, endPileY2);
+            renderCards(this, allCards, allCards.deck.userID, centerPileX2, centerPileY2, endPileX2, endPileY2, allEndPiles);
          }
       }
    }
