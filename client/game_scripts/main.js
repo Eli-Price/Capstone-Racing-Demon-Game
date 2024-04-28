@@ -520,6 +520,7 @@ class Player1Scene extends Phaser.Scene {
       // this.mousePositionText.setText(`Mouse Position: (${mouseX}, ${mouseY})`);
       if (allCards !== undefined) {
          this.demonPileCount.setText(`${allCards.demonPile.length}`);
+         console.log(allCards.deckPile.length);
          this.deckPileCount.setText(`${allCards.deckPile.length}`);
       }
 
