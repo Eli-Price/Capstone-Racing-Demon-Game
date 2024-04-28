@@ -293,8 +293,9 @@ class Player1Scene extends Phaser.Scene {
                }
             }
             sendPiles(this, allCards);
+            //setInterval(() => {}, 20);
             //renderEndCards(this, this.decks, endPileX, endPileY);
-            renderCards(this, allCards, userID, centerPileX, centerPileY, endPileX, endPileY[0], allEndPiles);
+            //renderCards(this, allCards, userID, centerPileX, centerPileY, endPileX, endPileY[0], allEndPiles);
          }
       });
 
