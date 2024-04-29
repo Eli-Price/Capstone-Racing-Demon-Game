@@ -367,7 +367,7 @@ class Player1Scene extends Phaser.Scene {
                      let cardsToMove = originalPile.splice(index);
                      allCards.centerPiles[i].push(...cardsToMove);
                   }
-                  socket.emit('sendPiles', allCards);
+                  //sendPiles(this, allCards);
 
                   break;
                }
@@ -395,9 +395,9 @@ class Player1Scene extends Phaser.Scene {
 
                      let card = this.simplifyCard(container.getAt(2));
                      socket.emit('sendEndCard', card, 0, i);
-                     socket.emit('sendPiles', allCards);
+                     //sendPiles(this, allCards);
                      timeSinceLastMove = 0;
-                     //socket.emit('returnPiles');
+                     socket.emit('returnPiles');
                      
                      //renderEndCards(this, this.decks, endPileX, endPileY);
 
@@ -426,9 +426,9 @@ class Player1Scene extends Phaser.Scene {
 
                         let card = this.simplifyCard(container.getAt(2));
                         socket.emit('sendEndCard', card, 1, i);
-                        socket.emit('sendPiles', allCards);
+                        //sendPiles(this, allCards);
                         timeSinceLastMove = 0;
-                        //socket.emit('returnPiles');
+                        socket.emit('returnPiles');
 
                         //renderEndCards(this, this.decks, endPileX, endPileY);
 
@@ -460,9 +460,9 @@ class Player1Scene extends Phaser.Scene {
 
                            let card = this.simplifyCard(container.getAt(2));
                            socket.emit('sendEndCard', card, 2, i);
-                           socket.emit('sendPiles', allCards);
+                           //sendPiles(this, allCards);
                            timeSinceLastMove = 0;
-                           //socket.emit('returnPiles');
+                           socket.emit('returnPiles');
 
                            //renderEndCards(this, this.decks, endPileX, endPileY);
 
@@ -495,7 +495,7 @@ class Player1Scene extends Phaser.Scene {
 
                         let card = this.simplifyCard(container.getAt(2));
                         socket.emit('sendEndCard', card, 3, i);
-                        socket.emit('sendPiles', allCards);
+                        sendPiles(this, allCards);
                         timeSinceLastMove = 0;
                         //socket.emit('returnPiles');
 
@@ -508,8 +508,8 @@ class Player1Scene extends Phaser.Scene {
             }
          } 
          allCards = decks.find(allCards => allCards.deck.userID === userID); 
-         //sendPiles(this, decks[0]);
-         //setInterval(() => {}, 120);
+         sendPiles(this, decks[0]);
+         setInterval(() => {}, 10);
 
          renderCards(this, allCards, allCards.deck.userID, centerPileX, centerPileY, endPileX, endPileY[0], allEndPiles);
          //renderEndCards(this, this.decks, endPileX, endPileY);
