@@ -10,7 +10,7 @@ import { sendPiles, updatePiles, createAllCards, showGameOverPopup } from './car
 
 let gameTimer = 0;
 let timeSinceLastMove = 0;
-let lastPointerDownTime = 0;
+let canFire = true;
 let canRender = true;
 let gameOver = false;
 let decks = [];
@@ -279,6 +279,11 @@ class Player1Scene extends Phaser.Scene {
 
       // Functions happen on clicking on deck, should be converted to an event listener
       this.input.on('pointerdown', (_pointer) => {
+         if (!canFire) {
+            // The timer is still active, so ignore this event
+            return;
+         }
+
          let allCards = decks.find(allCards => allCards.deck.userID === userID);
          var mouseX = _pointer.x;
          var mouseY = _pointer.y;
@@ -294,7 +299,12 @@ class Player1Scene extends Phaser.Scene {
                }
             }
             sendPiles(this, allCards);
-            //setInterval(() => {}, 20);
+            
+            canFire = false;
+            setTimeout(() => {
+               canFire = true;
+            }, 200);
+
             //renderEndCards(this, this.decks, endPileX, endPileY);
             //renderCards(this, allCards, userID, centerPileX, centerPileY, endPileX, endPileY[0], allEndPiles);
          }
@@ -520,16 +530,16 @@ class Player1Scene extends Phaser.Scene {
    update() {
       let allCards = decks[0];
 
-      var mouseX = this.input.mousePointer.x;
-      var mouseY = this.input.mousePointer.y;
-      mouseX = mouseX | 0;
-      mouseY = mouseY | 0;
+      // var mouseX = this.input.mousePointer.x;
+      // var mouseY = this.input.mousePointer.y;
+      // mouseX = mouseX | 0;
+      // mouseY = mouseY | 0;
       // this.mousePositionText.setText(`Mouse Position: (${mouseX}, ${mouseY})`);
-      if (allCards !== undefined) {
+      /*if (allCards !== undefined) {
          this.demonPileCount.setText(`${allCards.demonPile.length}`);
          console.log(allCards.deckPile.length);
          this.deckPileCount.setText(`${allCards.deckPile.length}`);
-      }
+      }*/
 
       if (this.playerID == null) {
          this.playerID = playerIDs[0];
@@ -541,6 +551,11 @@ class Player1Scene extends Phaser.Scene {
       if ((timeSinceLastMove % 10) === 0) {
          socket.emit('returnPiles');  
          if (canRender === true && decks[0] !== undefined) {
+            if (allCards !== undefined) {
+               this.demonPileCount.setText(`${allCards.demonPile.length}`);
+               console.log(allCards.deckPile.length);
+               this.deckPileCount.setText(`${allCards.deckPile.length}`);
+            }
             renderCards(this, allCards, allCards.deck.userID, centerPileX, centerPileY, endPileX, endPileY[0], allEndPiles);
             renderEndCards(this, decks, endPileX, endPileY[0]);
         }
