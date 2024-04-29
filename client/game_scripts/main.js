@@ -279,9 +279,9 @@ class Player1Scene extends Phaser.Scene {
 
       // Functions happen on clicking on deck, should be converted to an event listener
       this.input.on('pointerdown', (_pointer) => {
-         if (!canFire) {
+         /*if (!canFire) {
             return;
-         }
+         }*/
 
          let allCards = decks.find(allCards => allCards.deck.userID === userID);
          var mouseX = _pointer.x;
@@ -297,15 +297,18 @@ class Player1Scene extends Phaser.Scene {
                   allCards.deckPile[i] = card;
                }
             }
+            this.deckPileCount.setText(`${allCards.deckPile.length}`);
+            renderCards(this, allCards, userID, centerPileX, centerPileY, endPileX, endPileY[0], allEndPiles);
+            
             sendPiles(this, allCards);
             
-            canFire = false;
+            /*canFire = false;
             setTimeout(() => {
                canFire = true;
-            }, 50);
+            }, 50);*/
 
             //renderEndCards(this, this.decks, endPileX, endPileY);
-            //renderCards(this, allCards, userID, centerPileX, centerPileY, endPileX, endPileY[0], allEndPiles);
+            renderCards(this, allCards, userID, centerPileX, centerPileY, endPileX, endPileY[0], allEndPiles);
          }
       });
 
