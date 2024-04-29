@@ -100,6 +100,7 @@ export function renderCards(scene, allCards, userID, centerPileX, centerPileY, c
     //card.y = centerPileY + 82;
     card.getAt(0).setVisible(true);
     card.setDepth(i + 4);
+    card.getAt(0).setDepth(i + 4);
     // Store a reference to the pile in the card
     card.setData('pile', allCards.demonPile);
   }

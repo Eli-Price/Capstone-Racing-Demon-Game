@@ -299,7 +299,7 @@ class Player1Scene extends Phaser.Scene {
             }
             this.deckPileCount.setText(`${allCards.deckPile.length}`);
             renderCards(this, allCards, userID, centerPileX, centerPileY, endPileX, endPileY[0], allEndPiles);
-            
+
             sendPiles(this, allCards);
             
             /*canFire = false;
@@ -338,10 +338,11 @@ class Player1Scene extends Phaser.Scene {
       
       this.input.on('dragstart', (_pointer, container) => {
          let allCards = decks.find(allCards => allCards.deck.userID === userID);
+         container.setData('depth', container.depth);
          canRender = false;
 
          if (container.getData('pile') === allCards.drawPile) {
-            container.getAt(0).setDepth(Infinity);
+            container.setDepth(60000);
          } else {
             for (let i = 0; i < container.getData('pile').length; i++) {
                container.getData('pile')[i].setDepth(60000 + i);
@@ -360,7 +361,6 @@ class Player1Scene extends Phaser.Scene {
          // Find your own allCards object in decks to use
          let allCards = decks.find(allCards => allCards.deck.userID === userID);
          canRender = true;
-         container.setDepth();
 
          var mouseX = _pointer.x - 25;
          var mouseY = _pointer.y - 25;
