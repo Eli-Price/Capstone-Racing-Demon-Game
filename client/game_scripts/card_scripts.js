@@ -152,7 +152,7 @@ export function showGameOverPopup(p1Score, p2Score, p3Score, p4Score, winnerID, 
   popup.appendChild(message);
 
   // Create p elements for each player's score
-  let p1ScoreElement = document.createElement('p');
+  /*let p1ScoreElement = document.createElement('p');
   p1ScoreElement.textContent = `Player 1 Score: ${p1Score}`;
   popup.appendChild(p1ScoreElement);
 
@@ -168,7 +168,7 @@ export function showGameOverPopup(p1Score, p2Score, p3Score, p4Score, winnerID, 
   let p4ScoreElement = document.createElement('p');
   if (p4Score === undefined) { p4Score = 0; }
   p4ScoreElement.textContent = `Player 4 Score: ${p4Score}`;
-  popup.appendChild(p4ScoreElement);
+  popup.appendChild(p4ScoreElement);*/
 
   // Create a button that redirects to the home page
   let button = document.createElement('button');
