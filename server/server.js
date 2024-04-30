@@ -7,11 +7,7 @@ import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { Server } from 'socket.io';
-//import sqlite3 from 'sqlite3';
-//import { open } from 'sqlite';
 import { Deck } from './deck.js';
-//import { game } from '../client/game_scripts/main.js';
-
 
 
 const app = express();
@@ -27,7 +23,7 @@ const io = new Server(server, {
     //adapter: createAdapter()
 });
 
-// It doesn't work
+// Set up the admin UI webpage for socket.io
 instrument(io, { auth: false });
 
 const sessionStore = new InMemorySessionStore();
@@ -37,7 +33,6 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // serve static files
 app.use(express.static(path.join(__dirname, '../client')));
-//console.log(path.join(__dirname, '../client'));
 app.use(express.static(path.join(__dirname, '../dist')));
 app.use(express.static(path.join(__dirname, '../assets')));
 
@@ -51,7 +46,7 @@ app.get('/', (req, res) => {
 io.on('connection', (socket) => {
     const userID = socket.handshake.auth.userID;
     const roomID = socket.handshake.auth.roomID;
-
+    
     // Find the session for the user
     let session = sessionStore.findSession(userID);
     let gameEnded = false;
@@ -109,13 +104,17 @@ io.on('connection', (socket) => {
 
     socket.on('dealCards', () => {
         const room = sessionStore.getRoom(roomID);
-        let endPiles = sessionStore.getEndPiles(roomID);
+                let endPiles = sessionStore.getEndPiles(roomID);
         const allPlayersCards = room.players.map(playerID => {
             const session = sessionStore.findSession(playerID);
             return session.allCards;
         });
         // Sends out all piles, and ID of the player sending them
         socket.emit('recievePiles', userID, allPlayersCards, endPiles);
+    });
+
+    socket.on('sendReq', () => {
+        socket.to(roomID).emit('recieveReq', userID);
     });
 
     socket.on('sendPiles', (centerPilesData, drawPileData, demonPileData, deckPileData) => {
@@ -169,14 +168,12 @@ io.on('connection', (socket) => {
     });
 
     socket.on('checkGameOver', () => {
-        let isGameOver = true; // logic to check if the game is over later
-        //console.log('writing');
+        let isGameOver = true;
         const room = sessionStore.getRoom(roomID);
         let demonPiles = [];
         room.players.forEach(playerID => {
             const session = sessionStore.findSession(playerID);
-            demonPiles.push(session.allCards.demonPile); // assuming each session has a demonPile property
-            //console.log(demonPiles);
+            demonPiles.push(session.allCards.demonPile);
         });
 
         for (let i = 0; i < demonPiles.length; i++) {
@@ -190,12 +187,11 @@ io.on('connection', (socket) => {
             const endPiles = sessionStore.getEndPiles(roomID);
             let flattenedEndPiles = endPiles.flat(2);
 
-            // replace with your logic to calculate the scores
             let scores = [];
             let winner = '';
             room.players.forEach((playerID, index) => {
                 scores[index] = flattenedEndPiles.filter(card => card.owner === playerID).length - demonPiles[index].length;
-                if (scores[index] === Math.max(...scores)) {
+                                if (scores[index] === Math.max(...scores)) {
                     winner = playerID;
                 }
             });

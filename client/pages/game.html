@@ -14,11 +14,63 @@
 </head>
 
 <body style="background-color: #106d6d">
+   <button class="button" id="howToPlayButton">How to Play</button>
+
+   <div id="howToPlayModal" class="modal">
+      <!-- Modal content -->
+      <div class="modal-content">
+         <span class="close">&times;</span>
+         <h1>How to Play</h1>
+         <!-- Modal sections for rules -->
+         <div class="container">
+            <!--<div class="header">
+            <h1>How to Play</h1>
+            <button onclick="window.location.href = 'index.html';">Back to Home</button>
+         </div>-->
+            <div class="section">
+               <h2>Objective</h2>
+               <p>Move all the cards from the Nertz pile to the common play area (Lake).</p>
+            </div>
+            <div class="section">
+               <h2>Layout</h2>
+               <ul>
+                  <li><strong>Demon Pile:</strong> 13 cards, face-down.</li>
+                  <li><strong>Stock:</strong> Remaining deck after setting up Nertz and River, face-down.</li>
+                  <li><strong>River:</strong> Four piles beside the Nertz pile, each starting with one card face-up.
+                  </li>
+                  <li><strong>Lake (Common Area):</strong> Empty at the start; multiple shared foundations begin here
+                     where
+                     players play cards.</li>
+               </ul>
+            </div>
+            <div class="section">
+               <h2>Allowed Moves</h2>
+               <ul>
+                  <li>Players rapidly play cards from their River and Nertz pile into the Lake, building up from Ace to
+                     King in matching suits.</li>
+                  <li>Cards from the demon pile can fill the River as empty spaces appear.</li>
+                  <li>Cards are only placed on River piles in descending order and alternating colors.</li>
+                  <li>Only Kings (or sequences starting with a King) and cards from the demon pile can be moved to
+                     an empty River pile.</li>
+                  <li>If the Lake has no suitable cards, players can draw from the Stock to the River.</li>
+               </ul>
+            </div>
+            <div class="section">
+               <h2>Scoring</h2>
+               <p>Players score one point for each card successfully moved to the Lake.<br>
+                  At the end of the game, players lose one point for each card in their demon pile.<br>
+                  Rounds continue until one player reaches a predetermined score or the players agree to end the game.
+               </p>
+            </div>
+         </div>
+      </div>
+   </div>
+
    <div id="game"></div>
    <!--<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>-->
 
-   <!-- <script src="../other_scripts/game.js"></script> -->
-   <!--  <script src="../game_scripts/main.js" type="module"></script> -->
+   <script src="../other_scripts/game.js"></script>
+   <!-- <script src="../game_scripts/main.js" type="module"></script> -->
    <script src="/bundle.js"></script>
 </body>
 

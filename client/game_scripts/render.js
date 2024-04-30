@@ -120,11 +120,6 @@ export function renderCards(scene, allCards, userID, centerPileX, centerPileY, c
     });
   }
 
-  // Need to make gamescene for the other players, or do this on containers of gameobjects
-  /*if (isOwnDeck) {
-     scene.cameras.main.rotation = 2 * 3.1415926/2;
-  }*/
-
 
 }
 

@@ -2,8 +2,10 @@
 <html>
 
 <head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Phaser 3 Racing Demon - Home</title>
   <link rel="stylesheet" href="../pages/index.css">
+  <link rel="stylesheet" href="../pages/how_to_play.css">
 </head>
 
 <body>
@@ -14,8 +16,61 @@
     <button class="button" id="joinGameButton">Join Game</button>
   </div>
   <div class="input-field">
-    <input type="text" placeholder="Enter Room ID here">
+    <input type="text" id="roomInput" placeholder="Enter Room ID here">
+    <br>
   </div>
+  <div class="input-field">
+    <!-- <input type="text" id="usernameInput" placeholder="Enter your username"> -->
+  </div>
+  <button class="button" id="howToPlayButton">How to Play</button>
+
+  <div id="howToPlayModal" class="modal">
+    <!-- Modal content -->
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h1>How to Play</h1>
+      <!-- Modal sections for rules -->
+      <div class="container">
+        <!--<div class="header">
+          <h1>How to Play</h1>
+          <button onclick="window.location.href = 'index.html';">Back to Home</button>
+        </div>-->
+        <div class="section">
+          <h2>Objective</h2>
+          <p>Move all the cards from the Nertz pile to the common play area (Lake).</p>
+        </div>
+        <div class="section">
+          <h2>Layout</h2>
+          <ul>
+            <li><strong>Demon Pile:</strong> 13 cards, face-down.</li>
+            <li><strong>Stock:</strong> Remaining deck after setting up Nertz and River, face-down.</li>
+            <li><strong>River:</strong> Four piles beside the Nertz pile, each starting with one card face-up.</li>
+            <li><strong>Lake (Common Area):</strong> Empty at the start; multiple shared foundations begin here where
+              players play cards.</li>
+          </ul>
+        </div>
+        <div class="section">
+          <h2>Allowed Moves</h2>
+          <ul>
+            <li>Players rapidly play cards from their River and Nertz pile into the Lake, building up from Ace to King
+              in
+              matching suits.</li>
+            <li>Cards from the hand can replenish the River as spaces appear.</li>
+            <li>Cards are moved between River piles in descending order and alternating colors.</li>
+            <li>Only Kings (or sequences starting with a King) can be moved to an empty River pile.</li>
+            <li>If the Lake has no suitable cards, players can draw from the Stock to the River.</li>
+          </ul>
+        </div>
+        <div class="section">
+          <h2>Scoring</h2>
+          <p>Players score one point for each card successfully moved to the Lake.<br>
+            At the end of each round, players lose two points for every card left in their Nertz pile.<br>
+            Rounds continue until one player reaches a predetermined score or the players agree to end the game.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </body>
 
 <!-- <script src="https://cdn.jsdelivr.net/npm/phaser@v3.80.1/dist/phaser.min.js"></script> -->

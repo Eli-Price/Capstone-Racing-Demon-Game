@@ -127,17 +127,17 @@ export function createAllCards(scene, playerID) {
 
 
 export function showGameOverPopup(p1Score, p2Score, p3Score, p4Score, winnerID, userID) {
-  // Create a div for the popup
-  let popup = document.createElement('div');
-  popup.style.position = 'absolute';
-  popup.style.top = '50%';
-  popup.style.left = '50%';
-  popup.style.transform = 'translate(-50%, -50%)';
-  popup.style.backgroundColor = '#fff';
-  popup.style.padding = '20px';
-  popup.style.textAlign = 'center';
-  popup.style.zIndex = '1000';
-
+   // Create a div for the popup
+   let popup = document.createElement('div');
+   popup.style.position = 'absolute';
+   popup.style.top = '50%';
+   popup.style.left = '50%';
+   popup.style.transform = 'translate(-50%, -50%)';
+   popup.style.backgroundColor = '#fff';
+   popup.style.padding = '20px';
+   popup.style.textAlign = 'center';
+   popup.style.zIndex = '1000';
+   
   console.log('writing');
 
   
