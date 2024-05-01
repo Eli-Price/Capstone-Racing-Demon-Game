@@ -73,6 +73,7 @@ io.on('connection', (socket) => {
         console.log('Player Count: ' + sessionStore.getRoomPlayerCount(roomID) + ', Game Ended: ' + gameEnded);
         if (gameEnded == true) {
             sessionStore.removePlayerFromRoom(roomID, userID);
+            sessionStore.deleteSession(userID);
         }
         if (sessionStore.getRoomPlayerCount(roomID) === 1 && gameEnded == true) {
             console.log('deleting session and room');

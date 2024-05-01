@@ -10,7 +10,6 @@ import { sendPiles, updatePiles, createAllCards, showGameOverPopup } from './car
 
 let gameTimer = 0;
 let timeSinceLastMove = 0;
-let canFire = true;
 let canRender = true;
 let gameOver = false;
 let decks = [];
@@ -127,7 +126,7 @@ class Player1Scene extends Phaser.Scene {
 
       createDeckBottom(this);
 
-      this.playerText = this.add.text(15, 15, '', { font: '20px Courier', fill: '#ffffff' });
+      //this.playerText = this.add.text(15, 15, '', { font: '20px Courier', fill: '#ffffff' });
       this.demonPileCount = this.add.text(149, 422, '', { font: '16px Courier', fill: '#ffffff' });
       this.deckPileCount = this.add.text(69, 539, '', { font: '16px Courier', fill: '#ffffff' });
 
@@ -289,24 +288,23 @@ class Player1Scene extends Phaser.Scene {
          var mouseX = _pointer.x;
          var mouseY = _pointer.y;
          if (mouseX >= 65 && mouseX <= 132 && mouseY >= 581 && mouseY <= 673) {
-            for (let i = 0; i < 3; i++) {
-               let drawn = allCards.deck.drawCard(allCards.deckPile);
-               if (drawn !== undefined) {
-                  allCards.drawPile.push(drawn);
-               } else {
-                  length = allCards.drawPile.length;
-                  for (let i = 0; i < length; i++) {
-                     let card = allCards.drawPile.pop();
-                     allCards.deckPile[i] = card;
+            if (allCards.deckPile.length === 0) {
+               let length = allCards.drawPile.length;
+               for (let i = 0; i < length; i++) {
+                  let card = allCards.drawPile.pop();
+                  allCards.deckPile.push(card);
+               }
+            } else {
+               for (let i = 0; i < 3; i++) {
+                  let drawn = allCards.deck.drawCard(allCards.deckPile);
+                  if (drawn !== undefined) {
+                     allCards.drawPile.push(drawn);
                   }
                }
             }  
             this.deckPileCount.setText(`${allCards.deckPile.length}`);
             renderCards(this, allCards, userID, centerPileX, centerPileY, endPileX, endPileY[0], allEndPiles);
-
             sendPiles(this, allCards);
-
-            //renderEndCards(this, this.decks, endPileX, endPileY);
             renderCards(this, allCards, userID, centerPileX, centerPileY, endPileX, endPileY[0], allEndPiles);
          }
       });
@@ -535,19 +533,8 @@ class Player1Scene extends Phaser.Scene {
    update() {
       let allCards = decks[0];
       if (allCards !== undefined) {
-         this.playerText.setText(`${allCards.deck.userID}`);
+         //this.playerText.setText(`${allCards.deck.userID}`);
       }
-
-      // var mouseX = this.input.mousePointer.x;
-      // var mouseY = this.input.mousePointer.y;
-      // mouseX = mouseX | 0;
-      // mouseY = mouseY | 0;
-      // this.mousePositionText.setText(`Mouse Position: (${mouseX}, ${mouseY})`);
-      /*if (allCards !== undefined) {
-         this.demonPileCount.setText(`${allCards.demonPile.length}`);
-         console.log(allCards.deckPile.length);
-         this.deckPileCount.setText(`${allCards.deckPile.length}`);
-      }*/
 
       if (this.playerID == null) {
          this.playerID = playerIDs[0];
@@ -559,7 +546,7 @@ class Player1Scene extends Phaser.Scene {
       if ((timeSinceLastMove % 20) === 0) {
          //socket.emit('returnPiles');  
          if (canRender === true && decks[0] !== undefined) {
-            this.playerText.setText(`${allCards.deck.userID}`);
+            //this.playerText.setText(`${allCards.deck.userID}`);
             this.demonPileCount.setText(`${allCards.demonPile.length}`);
             console.log(allCards.deckPile.length);
             this.deckPileCount.setText(`${allCards.deckPile.length}`);
@@ -684,7 +671,7 @@ class Player2Scene extends Phaser.Scene {
 
       createDeckBottom(this);
 
-      this.playerText = this.add.text(15, 15, ``, { font: '20px Courier', fill: '#ffffff' });
+      //this.playerText = this.add.text(15, 15, ``, { font: '20px Courier', fill: '#ffffff' });
       this.demonPileCount = this.add.text(100, 20, '', { font: '18px Courier', fill: '#ffffff' });
       this.deckPileCount = this.add.text(44, 104, '', { font: '18px Courier', fill: '#ffffff' });
 
@@ -720,7 +707,7 @@ class Player2Scene extends Phaser.Scene {
       mouseY = mouseY | 0;
 
       if (allCards !== undefined) {
-         this.playerText.setText(`${allCards.deck.userID}`);
+         //this.playerText.setText(`${allCards.deck.userID}`);
          this.demonPileCount.setText(`${allCards.demonPile.length}`);
          this.deckPileCount.setText(`${allCards.deckPile.length}`);
       }
@@ -776,7 +763,7 @@ class Player3Scene extends Phaser.Scene {
 
       createDeckBottom(this);
 
-      this.playerText = this.add.text(15, 15, ``, { font: '20px Courier', fill: '#ffffff' });
+      //this.playerText = this.add.text(15, 15, ``, { font: '20px Courier', fill: '#ffffff' });
       this.demonPileCount = this.add.text(100, 20, '', { font: '18px Courier', fill: '#ffffff' });
       this.deckPileCount = this.add.text(44, 94, '', { font: '18px Courier', fill: '#ffffff' });
 
@@ -812,7 +799,7 @@ class Player3Scene extends Phaser.Scene {
       mouseY = mouseY | 0;
       
       if (allCards !== undefined) {
-         this.playerText.setText(`${allCards.deck.userID}`);
+         //this.playerText.setText(`${allCards.deck.userID}`);
          this.demonPileCount.setText(`${allCards.demonPile.length}`);
          this.deckPileCount.setText(`${allCards.deckPile.length}`);
       }
@@ -867,7 +854,7 @@ class Player4Scene extends Phaser.Scene {
 
       createDeckBottom(this);
 
-      this.playerText = this.add.text(15, 15, ``, { font: '20px Courier', fill: '#ffffff' });
+      //this.playerText = this.add.text(15, 15, ``, { font: '20px Courier', fill: '#ffffff' });
       this.demonPileCount = this.add.text(100, 20, '', { font: '18px Courier', fill: '#ffffff' });
       this.deckPileCount = this.add.text(44, 94, '', { font: '18px Courier', fill: '#ffffff' });
 
@@ -903,7 +890,7 @@ class Player4Scene extends Phaser.Scene {
       mouseY = mouseY | 0;
       
       if (allCards !== undefined) {
-         this.playerText.setText(`${allCards.deck.userID}`);
+         //this.playerText.setText(`${allCards.deck.userID}`);
          this.demonPileCount.setText(`${allCards.demonPile.length}`);
          this.deckPileCount.setText(`${allCards.deckPile.length}`);
       }
