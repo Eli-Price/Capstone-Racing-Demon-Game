@@ -15,7 +15,7 @@ body {
     background-size: cover;
 }
 
-.container {
+  .container {
     background: white;
     max-width: 800px;
     margin: auto;
