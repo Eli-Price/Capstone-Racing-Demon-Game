@@ -673,7 +673,7 @@ class Player2Scene extends Phaser.Scene {
 
       //this.playerText = this.add.text(15, 15, ``, { font: '20px Courier', fill: '#ffffff' });
       this.demonPileCount = this.add.text(100, 20, '', { font: '18px Courier', fill: '#ffffff' });
-      this.deckPileCount = this.add.text(44, 104, '', { font: '18px Courier', fill: '#ffffff' });
+      this.deckPileCount = this.add.text(44, 90, '', { font: '18px Courier', fill: '#ffffff' });
 
       for (let i = 0; i < centerPileX2.length; i++) {
          this.deckBottom.push(this.add.sprite(centerPileX2[i], centerPileY2, 'deckBottomTexture'));
@@ -856,7 +856,7 @@ class Player4Scene extends Phaser.Scene {
 
       //this.playerText = this.add.text(15, 15, ``, { font: '20px Courier', fill: '#ffffff' });
       this.demonPileCount = this.add.text(100, 20, '', { font: '18px Courier', fill: '#ffffff' });
-      this.deckPileCount = this.add.text(44, 94, '', { font: '18px Courier', fill: '#ffffff' });
+      this.deckPileCount = this.add.text(44, 90, '', { font: '18px Courier', fill: '#ffffff' });
 
       for (let i = 0; i < centerPileX2.length; i++) {
          this.deckBottom.push(this.add.sprite(centerPileX2[i], centerPileY2, 'deckBottomTexture'));

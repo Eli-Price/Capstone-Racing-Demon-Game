@@ -52,10 +52,22 @@ body {
     color: black;
     line-height: 1.5;
   }
+  #menuButton {
+    position: relative;
+    top: 20px; /* Offset from the top */
+    left: 780px; /* Offset from the right */
+    padding: 12px 20px;
+    background-color: grey;
+    color: white;
+    border: 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+  }
   #howToPlayButton {
     position: relative;
     top: 20px; /* Offset from the top */
-    left: 85%; /* Offset from the right */
+    left: 800px; /* Offset from the right */
     padding: 12px 20px;
     background-color: grey;
     color: white;
@@ -76,17 +88,18 @@ body {
     top: 0;
     width: 100%; /* Full width */
     height: 100%; /* Full height */
-    overflow: auto; /* Enable scroll if needed */
+    /*overflow: auto; /* Enable scroll if needed */
     background-color: rgb(0,0,0); /* Fallback color */
     background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
   }
   
   .modal-content {
     background-color: #fefefe;
-    margin: 15% auto; /* 15% from the top and centered */
+    margin: 15% auto; 
+    margin-top: 40px;
     padding: 20px;
     border: 1px solid #888;
-    width: 80%; /* Could be more or less, depending on screen size */
+    width: 800px; 
   }
   
   .close {
